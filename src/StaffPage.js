@@ -62,10 +62,22 @@ function StaffPage({ staffName }) {
         <div style={{ marginTop: 30 }}>
           <h3>QR Code untuk Attendance</h3>
 
-          <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=http://localhost:3001/attendance?token=${qrToken}`}
-            alt="QR Code"
-          />
+          {qrToken && (() => {
+  const fullUrl = `${window.location.origin}/attendance?token=${qrToken}`;
+  const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(fullUrl)}`;
+  return (
+    <div style={{ marginTop: 30 }}>
+      <h3>QR Code untuk Attendance</h3>
+
+      <img src={qrApi} alt="QR Code" style={{ maxWidth: 220 }} />
+
+      <p><b>Session ID:</b> {sessionId}</p>
+      <p><b>QR Token:</b> {qrToken}</p>
+      <p><small>Link: <a href={fullUrl} target="_blank" rel="noreferrer">{fullUrl}</a></small></p>
+    </div>
+  );
+})()}
+
 
 
           <p><b>Session ID:</b> {sessionId}</p>
@@ -79,3 +91,4 @@ function StaffPage({ staffName }) {
 }
 
 export default StaffPage;
+
