@@ -3,8 +3,9 @@ import { supabase } from "./supabase";
 
 function StaffPage({ staffName }) {
   const [course, setCourse] = useState("");
-  const [qrToken, setQrToken] = useState("");
+  const [qrToken, setQrToken] = useState(""); // token string
   const [sessionId, setSessionId] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const createSession = async () => {
     if (!course.trim()) {
@@ -12,109 +13,133 @@ function StaffPage({ staffName }) {
       return;
     }
 
-    // Token QR unik
-    const token = crypto.randomUUID();
+    try {
+      setLoading(true);
 
-    // Insert ke table attendance_sessions
-    const { data, error } = await supabase
-      .from("attendance_sessions")
-      .insert([
-        {
-          course_code: course,
-          token: token,
-          created_at: new Date(),
-        },
-      ])
-      .select()
-      .limit(1);
+      // create a unique token for this attendance session
+      const token = typeof crypto !== "undefined" && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2) + Date.now().toString(36);
 
-    if (error) {
-      alert("Error creating session: " + error.message);
-      return;
+      const { data, error } = await supabase
+        .from("attendance_sessions")
+        .insert([
+          {
+            course_code: course.trim(),
+            token: token,
+            created_at: new Date(),
+          },
+        ])
+        .select()
+        .limit(1);
+
+      if (error) {
+        alert("Error creating session: " + error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        alert("No session returned from server.");
+        setLoading(false);
+        return;
+      }
+
+      setSessionId(data[0].id);
+      setQrToken(token);
+      setLoading(false);
+    } catch (e) {
+      setLoading(false);
+      alert("Unexpected error: " + e.message);
     }
-
-    setSessionId(data[0].id);
-    setQrToken(token);
   };
 
+  // build full URL & QR API url when qrToken present
+  const fullUrl = qrToken ? `${window.location.origin}/attendance?token=${qrToken}` : "";
+  const qrApi = qrToken
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(fullUrl)}`
+    : "";
+
   return (
-    <div style={{ padding: 30, fontFamily: "Arial, sans-serif" }}>
-      <h2>Welcome, {staffName}</h2>
+    <div style={{ padding: 30, fontFamily: "Arial, sans-serif", maxWidth: 900 }}>
+      <h2 style={{ marginBottom: 8 }}>Welcome, {staffName}</h2>
 
-      <h3>Create Attendance Session</h3>
+      <h3 style={{ marginTop: 20 }}>Create Attendance Session</h3>
 
-      <input
-        style={{ padding: 8, width: 260 }}
-        placeholder="Course Code (e.g. DIT101)"
-        value={course}
-        onChange={(e) => setCourse(e.target.value)}
-      />
+      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
+        <input
+          style={{ padding: 8, width: 300, borderRadius: 6, border: "1px solid #ccc" }}
+          placeholder="Course Code (e.g. DIT101)"
+          value={course}
+          onChange={(e) => setCourse(e.target.value)}
+        />
+        <button
+          onClick={createSession}
+          style={{
+            padding: "8px 16px",
+            borderRadius: 6,
+            border: "none",
+            background: "#0070f3",
+            color: "white",
+            cursor: "pointer",
+          }}
+          disabled={loading}
+        >
+          {loading ? "Creating..." : "Create Session"}
+        </button>
+      </div>
 
-      <br />
-      <br />
-
-      <button onClick={createSession} style={{ padding: "8px 16px" }}>
-        Create Session
-      </button>
-
-      {/* Papar QR selepas berjaya create session */}
+      {/* If qrToken exists, show a single nicely styled card */}
       {qrToken && (
-        <div style={{ marginTop: 30 }}>
-          <h3>QR Code untuk Attendance</h3>
+        <div
+          style={{
+            marginTop: 20,
+            padding: "20px",
+            border: "1px solid #e6e6e6",
+            borderRadius: 10,
+            maxWidth: 420,
+            background: "#fff",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+          }}
+        >
+          <h3 style={{ marginTop: 0, marginBottom: 12, color: "#222" }}>
+            QR Code untuk Attendance
+          </h3>
 
-          {qrToken && (() => {
-  const fullUrl = `${window.location.origin}/attendance?token=${qrToken}`;
-  const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(fullUrl)}`;
-  return (
-    <div style={{
-  marginTop: 30,
-  padding: "20px",
-  border: "1px solid #ddd",
-  borderRadius: "10px",
-  maxWidth: "350px",
-  background: "#fafafa"
-}}>
-  <h2 style={{ marginBottom: "15px", color: "#333" }}>QR Code untuk Attendance</h2>
+          <div style={{ textAlign: "center" }}>
+            <img
+              src={qrApi}
+              alt="QR Code"
+              style={{
+                width: 220,
+                height: 220,
+                borderRadius: 8,
+                boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
+                background: "white",
+              }}
+            />
+          </div>
 
-  <div style={{ textAlign: "center" }}>
-    <img
-      src={qrApi}
-      alt="QR Code"
-      style={{
-        width: "220px",
-        height: "220px",
-        border: "8px solid white",
-        boxShadow: "0px 0px 10px rgba(0,0,0,0.2)",
-        marginBottom: "20px",
-        borderRadius: "10px"
-      }}
-    />
-  </div>
+          <div style={{ marginTop: 14 }}>
+            <p style={{ margin: "6px 0" }}>
+              <strong>Session ID:</strong> {sessionId}
+            </p>
+            <p style={{ margin: "6px 0" }}>
+              <strong>QR Token:</strong> {qrToken}
+            </p>
 
-  <p><b>Session ID:</b> {sessionId}</p>
-  <p><b>QR Token:</b> {qrToken}</p>
+            <p style={{ marginTop: 10 }}>
+              <strong>Link:</strong>
+              <br />
+              <a href={fullUrl} target="_blank" rel="noreferrer" style={{ color: "#0070f3" }}>
+                {fullUrl}
+              </a>
+            </p>
 
-  <p style={{ marginTop: "10px" }}>
-    <b>Link:</b><br />
-    <a href={fullUrl} target="_blank" rel="noreferrer" style={{ color: "#0070f3" }}>
-      {fullUrl}
-    </a>
-  </p>
-
-  <p style={{ marginTop: "15px", color: "#555" }}>
-    📌 <i>Pelajar perlu scan QR ini untuk rekod kehadiran.</i>
-  </p>
-</div>
-
-  );
-})()}
-
-
-
-          <p><b>Session ID:</b> {sessionId}</p>
-          <p><b>QR Token:</b> {qrToken}</p>
-
-          <p>Pelajar perlu scan QR ini untuk rekod kehadiran.</p>
+            <p style={{ marginTop: 12, color: "#555" }}>
+              📌 <i>Pelajar perlu scan QR ini untuk rekod kehadiran.</i>
+            </p>
+          </div>
         </div>
       )}
     </div>
@@ -122,5 +147,6 @@ function StaffPage({ staffName }) {
 }
 
 export default StaffPage;
+
 
 
