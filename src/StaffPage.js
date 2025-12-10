@@ -66,15 +66,46 @@ function StaffPage({ staffName }) {
   const fullUrl = `${window.location.origin}/attendance?token=${qrToken}`;
   const qrApi = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(fullUrl)}`;
   return (
-    <div style={{ marginTop: 30 }}>
-      <h3>QR Code untuk Attendance</h3>
+    <div style={{
+  marginTop: 30,
+  padding: "20px",
+  border: "1px solid #ddd",
+  borderRadius: "10px",
+  maxWidth: "350px",
+  background: "#fafafa"
+}}>
+  <h2 style={{ marginBottom: "15px", color: "#333" }}>QR Code untuk Attendance</h2>
 
-      <img src={qrApi} alt="QR Code" style={{ maxWidth: 220 }} />
+  <div style={{ textAlign: "center" }}>
+    <img
+      src={qrApi}
+      alt="QR Code"
+      style={{
+        width: "220px",
+        height: "220px",
+        border: "8px solid white",
+        boxShadow: "0px 0px 10px rgba(0,0,0,0.2)",
+        marginBottom: "20px",
+        borderRadius: "10px"
+      }}
+    />
+  </div>
 
-      <p><b>Session ID:</b> {sessionId}</p>
-      <p><b>QR Token:</b> {qrToken}</p>
-      <p><small>Link: <a href={fullUrl} target="_blank" rel="noreferrer">{fullUrl}</a></small></p>
-    </div>
+  <p><b>Session ID:</b> {sessionId}</p>
+  <p><b>QR Token:</b> {qrToken}</p>
+
+  <p style={{ marginTop: "10px" }}>
+    <b>Link:</b><br />
+    <a href={fullUrl} target="_blank" rel="noreferrer" style={{ color: "#0070f3" }}>
+      {fullUrl}
+    </a>
+  </p>
+
+  <p style={{ marginTop: "15px", color: "#555" }}>
+    📌 <i>Pelajar perlu scan QR ini untuk rekod kehadiran.</i>
+  </p>
+</div>
+
   );
 })()}
 
@@ -91,4 +122,5 @@ function StaffPage({ staffName }) {
 }
 
 export default StaffPage;
+
 
