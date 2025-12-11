@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { supabase } from "./supabase";
+import AttendanceList from "./AttendanceList";
 
 function StaffPage({ staffName }) {
   const [course, setCourse] = useState("");
@@ -147,6 +148,7 @@ function StaffPage({ staffName }) {
 }
 
 export default StaffPage;
+
 
 
 
