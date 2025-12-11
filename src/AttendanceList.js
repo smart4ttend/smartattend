@@ -2,16 +2,14 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
 function AttendanceList({ sessionId }) {
-  const [rows, setRows] = useState([]);
+  const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     if (!sessionId) return;
 
-    const fetchAttendance = async () => {
+    const fetchData = async () => {
       setLoading(true);
-      setErrorMsg("");
 
       const { data, error } = await supabase
         .from("attendance_records")
@@ -19,107 +17,73 @@ function AttendanceList({ sessionId }) {
         .eq("session_id", sessionId)
         .order("created_at", { ascending: true });
 
-      if (error) {
-        console.error(error);
-        setErrorMsg(error.message);
-        setLoading(false);
-        return;
-      }
-
-      setRows(data || []);
+      if (!error) setRecords(data || []);
       setLoading(false);
     };
 
-    fetchAttendance();
+    fetchData();
+
+    // OPTIONAL: realtime update
+    const channel = supabase
+      .channel("attendance_updates")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "attendance_records" },
+        (payload) => {
+          if (payload.new.session_id === sessionId) {
+            setRecords((prev) => [...prev, payload.new]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [sessionId]);
 
   return (
-    <div
-      style={{
-        marginTop: 24,
-        padding: 20,
-        border: "1px solid #e6e6e6",
-        borderRadius: 10,
-        background: "#fff",
-        maxWidth: 600,
-      }}
-    >
-      <h3 style={{ marginTop: 0 }}>Senarai Kehadiran</h3>
+    <div style={{ marginTop: 40 }}>
+      <h3>Senarai Kehadiran</h3>
 
-      {loading && <p>Sedang memuatkan kehadiran...</p>}
-      {errorMsg && <p style={{ color: "red" }}>Error: {errorMsg}</p>}
+      {loading && <p>Loading...</p>}
 
-      {!loading && !errorMsg && rows.length === 0 && (
-        <p>Belum ada pelajar yang merekod kehadiran.</p>
+      {!loading && records.length === 0 && (
+        <p>Tiada rekod kehadiran setakat ini.</p>
       )}
 
-      {!loading && rows.length > 0 && (
+      {records.length > 0 && (
         <table
           style={{
             width: "100%",
             borderCollapse: "collapse",
-            fontSize: 14,
+            marginTop: 10,
+            fontSize: "15px",
           }}
         >
           <thead>
-            <tr>
-              <th
-                style={{
-                  textAlign: "left",
-                  borderBottom: "1px solid #ddd",
-                  padding: "6px 4px",
-                }}
-              >
-                #
+            <tr style={{ background: "#f0f0f0" }}>
+              <th style={{ border: "1px solid #ccc", padding: 8 }}>Bil</th>
+              <th style={{ border: "1px solid #ccc", padding: 8 }}>
+                Matric
               </th>
-              <th
-                style={{
-                  textAlign: "left",
-                  borderBottom: "1px solid #ddd",
-                  padding: "6px 4px",
-                }}
-              >
-                Matric No
-              </th>
-              <th
-                style={{
-                  textAlign: "left",
-                  borderBottom: "1px solid #ddd",
-                  padding: "6px 4px",
-                }}
-              >
-                Masa Hadir
+              <th style={{ border: "1px solid #ccc", padding: 8 }}>
+                Masa Rekod
               </th>
             </tr>
           </thead>
+
           <tbody>
-            {rows.map((r, index) => (
-              <tr key={r.id}>
-                <td
-                  style={{
-                    borderBottom: "1px solid #f0f0f0",
-                    padding: "4px 4px",
-                  }}
-                >
+            {records.map((rec, index) => (
+              <tr key={rec.id}>
+                <td style={{ border: "1px solid #ccc", padding: 8 }}>
                   {index + 1}
                 </td>
-                <td
-                  style={{
-                    borderBottom: "1px solid #f0f0f0",
-                    padding: "4px 4px",
-                  }}
-                >
-                  {r.student_matric}
+                <td style={{ border: "1px solid #ccc", padding: 8 }}>
+                  {rec.student_matric}
                 </td>
-                <td
-                  style={{
-                    borderBottom: "1px solid #f0f0f0",
-                    padding: "4px 4px",
-                  }}
-                >
-                  {r.created_at
-                    ? new Date(r.created_at).toLocaleString()
-                    : "-"}
+                <td style={{ border: "1px solid #ccc", padding: 8 }}>
+                  {new Date(rec.created_at).toLocaleString()}
                 </td>
               </tr>
             ))}
@@ -131,3 +95,4 @@ function AttendanceList({ sessionId }) {
 }
 
 export default AttendanceList;
+
