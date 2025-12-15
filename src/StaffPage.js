@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { supabase } from "./supabase";
 import AttendanceList from "./AttendanceList";
 
-function StaffPage({ staffName }) {
+function StaffPage({ staffName, logout }) {
 
   // ✅ 1) SEMUA HOOKS DI ATAS
   const [course, setCourse] = useState("");
@@ -55,6 +55,20 @@ function StaffPage({ staffName }) {
   return (
     <div style={{ padding: 30 }}>
       <h2>Welcome, {staffName}</h2>
+      <button
+  onClick={logout}
+  style={{
+    marginTop: 10,
+    padding: "6px 14px",
+    background: "#e53935",
+    color: "white",
+    border: "none",
+    borderRadius: 5,
+    cursor: "pointer"
+  }}
+>
+  Logout
+</button>
 
       <input
         placeholder="Course Code (DIT101)"
@@ -72,6 +86,7 @@ function StaffPage({ staffName }) {
 }
 
 export default StaffPage;
+
 
 
 
