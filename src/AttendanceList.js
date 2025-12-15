@@ -5,39 +5,55 @@ function AttendanceList({ sessionId }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Fetch data
   const fetchRecords = async () => {
-    if (!sessionId) return;
-
     console.log("Fetching records for session:", sessionId);
 
     const { data, error } = await supabase
       .from("attendance_records")
       .select("*")
       .eq("session_id", sessionId)
-      .order("timestamp", { ascending: false });
+      .order("timestamp", { ascending: true });
 
     if (error) {
-      console.error("Error fetching attendance:", error.message);
-      return;
+      console.error(error);
+    } else {
+      console.log("DATA LOADED:", data);
+      setRecords(data || []);
     }
-
-    console.log("DATA LOADED:", data);
-    setRecords(data || []);
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchRecords(); // first load
+    if (!sessionId) return;
 
-    // 🔁 auto refresh every 5 seconds
-    const interval = setInterval(fetchRecords, 5000);
+    fetchRecords();
 
-    return () => clearInterval(interval);
+    // 🔴 REALTIME LISTENER
+    const channel = supabase
+      .channel("attendance-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "attendance_records",
+          filter: `session_id=eq.${sessionId}`,
+        },
+        () => {
+          fetchRecords(); // auto refresh bila ada scan baru
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [sessionId]);
 
   return (
     <div style={{ marginTop: 30 }}>
-      <h3>📋 Senarai Kehadiran</h3>
+      <h3>Senarai Kehadiran</h3>
 
       {loading && <p>Memuatkan data...</p>}
 
@@ -46,20 +62,11 @@ function AttendanceList({ sessionId }) {
       )}
 
       {records.length > 0 && (
-        <table
-          border="1"
-          cellPadding="8"
-          style={{
-            borderCollapse: "collapse",
-            marginTop: 10,
-            width: "100%",
-            maxWidth: 500,
-          }}
-        >
-          <thead style={{ background: "#f2f2f2" }}>
+        <table border="1" cellPadding="8" style={{ borderCollapse: "collapse" }}>
+          <thead>
             <tr>
-              <th>No</th>
-              <th>Matric No</th>
+              <th>#</th>
+              <th>No Matrik</th>
               <th>Masa</th>
             </tr>
           </thead>
@@ -68,7 +75,7 @@ function AttendanceList({ sessionId }) {
               <tr key={r.id}>
                 <td>{i + 1}</td>
                 <td>{r.student_matric}</td>
-                <td>{new Date(r.timestamp).toLocaleTimeString()}</td>
+                <td>{new Date(r.timestamp).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
@@ -79,3 +86,4 @@ function AttendanceList({ sessionId }) {
 }
 
 export default AttendanceList;
+
