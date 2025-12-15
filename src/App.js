@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
+import LoginPage from "./LoginPage";
 import StaffPage from "./StaffPage";
 import AttendancePage from "./AttendancePage";
-import LoginPage from "./LoginPage";
 
 function App() {
-  const [userType, setUserType] = useState(null); // "student" | "staff"
+  const [userType, setUserType] = useState(null);
   const [userId, setUserId] = useState(null);
 
-  // ✅ LOAD LOGIN DARI localStorage (AUTO LOGIN)
+  // 🔹 Restore login selepas refresh
   useEffect(() => {
     const savedType = localStorage.getItem("userType");
     const savedId = localStorage.getItem("userId");
@@ -18,37 +18,33 @@ function App() {
     }
   }, []);
 
-  // ✅ LOGIN
   const handleLogin = (type, id) => {
-    localStorage.setItem("userType", type);
-    localStorage.setItem("userId", id);
-
     setUserType(type);
     setUserId(id);
+    localStorage.setItem("userType", type);
+    localStorage.setItem("userId", id);
   };
 
-  // ✅ LOGOUT
   const handleLogout = () => {
-    localStorage.removeItem("userType");
-    localStorage.removeItem("userId");
-
     setUserType(null);
     setUserId(null);
+    localStorage.removeItem("userType");
+    localStorage.removeItem("userId");
   };
 
-  // ===============================
-  // ROUTING RINGKAS
-  // ===============================
-
+  // 🔹 STAFF
   if (userType === "staff") {
     return <StaffPage staffName={userId} logout={handleLogout} />;
   }
 
+  // 🔹 STUDENT (QR attendance)
   if (userType === "student") {
     return <AttendancePage />;
   }
 
+  // 🔹 LOGIN
   return <LoginPage onLogin={handleLogin} />;
 }
 
 export default App;
+
