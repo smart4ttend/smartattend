@@ -8,60 +8,55 @@ function AttendanceList({ sessionId }) {
   useEffect(() => {
     if (!sessionId) return;
 
-    const loadRecords = async () => {
-      setLoading(true);
+    console.log("Fetching records for session:", sessionId);
 
-      console.log("Fetching records for session:", sessionId);
-
+    const fetchRecords = async () => {
       const { data, error } = await supabase
         .from("attendance_records")
-        .select("*")
+        .select("student_matric, timestamp")
         .eq("session_id", sessionId)
         .order("timestamp", { ascending: false });
 
       if (error) {
-        console.error("❌ ERROR FETCHING ATTENDANCE:", error);
-      } else {
-        console.log("✅ DATA LOADED:", data);
-        setRecords(data);
+        console.error("Error loading records:", error);
+        return;
       }
 
+      console.log("DATA LOADED:", data);
+      setRecords(data);
       setLoading(false);
     };
 
-    loadRecords();
+    fetchRecords();
   }, [sessionId]);
 
   return (
-    <div style={{ marginTop: 30, maxWidth: 600 }}>
+    <div style={{ marginTop: 30 }}>
       <h3>Senarai Kehadiran</h3>
 
-      {loading && <p>Sedang memuatkan...</p>}
+      {loading && <p>Memuatkan...</p>}
 
       {!loading && records.length === 0 && (
         <p>Tiada rekod kehadiran setakat ini.</p>
       )}
 
-      {!loading && records.length > 0 && (
+      {records.length > 0 && (
         <table
           border="1"
           cellPadding="8"
-          style={{ width: "100%", borderCollapse: "collapse", background: "white" }}
+          style={{ borderCollapse: "collapse", width: "100%", marginTop: 10 }}
         >
-          <thead style={{ background: "#f2f2f2" }}>
+          <thead>
             <tr>
-              <th>Bil</th>
-              <th>Matric</th>
-              <th>Masa</th>
+              <th>Student Matric</th>
+              <th>Masa Rekod</th>
             </tr>
           </thead>
-
           <tbody>
-            {records.map((item, index) => (
-              <tr key={item.id}>
-                <td>{index + 1}</td>
-                <td>{item.student_matric}</td>
-                <td>{new Date(item.timestamp).toLocaleString()}</td>
+            {records.map((r, index) => (
+              <tr key={index}>
+                <td>{r.student_matric}</td>
+                <td>{new Date(r.timestamp).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
