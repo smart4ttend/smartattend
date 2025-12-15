@@ -3,67 +3,52 @@ import { supabase } from "./supabase";
 
 function AttendanceList({ sessionId }) {
   const [records, setRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch data
-  const fetchRecords = async () => {
-    console.log("Fetching records for session:", sessionId);
-
-    const { data, error } = await supabase
-      .from("attendance_records")
-      .select("*")
-      .eq("session_id", sessionId)
-      .order("timestamp", { ascending: true });
-
-    if (error) {
-      console.error(error);
-    } else {
-      console.log("DATA LOADED:", data);
-      setRecords(data || []);
-    }
-    setLoading(false);
-  };
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!sessionId) return;
 
-    fetchRecords();
+    const fetchRecords = async () => {
+      console.log("Fetching records for session:", sessionId);
+      setLoading(true);
 
-    // 🔴 REALTIME LISTENER
-    const channel = supabase
-      .channel("attendance-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "attendance_records",
-          filter: `session_id=eq.${sessionId}`,
-        },
-        () => {
-          fetchRecords(); // auto refresh bila ada scan baru
-        }
-      )
-      .subscribe();
+      const { data, error } = await supabase
+        .from("attendance_records")
+        .select("*")
+        .eq("session_id", sessionId)
+        .order("timestamp", { ascending: true });
 
-    return () => {
-      supabase.removeChannel(channel);
+      if (error) {
+        console.error("Error fetch attendance:", error.message);
+        setRecords([]);
+      } else {
+        console.log("DATA LOADED:", data);
+        setRecords(data || []);
+      }
+
+      setLoading(false);
     };
-  }, [sessionId]);
+
+    fetchRecords();
+  }, [sessionId]); // ⬅️ WAJIB ADA sessionId DI SINI
 
   return (
     <div style={{ marginTop: 30 }}>
       <h3>Senarai Kehadiran</h3>
 
-      {loading && <p>Memuatkan data...</p>}
+      {loading && <p>Loading...</p>}
 
       {!loading && records.length === 0 && (
         <p>Tiada rekod kehadiran setakat ini.</p>
       )}
 
-      {records.length > 0 && (
-        <table border="1" cellPadding="8" style={{ borderCollapse: "collapse" }}>
-          <thead>
+      {!loading && records.length > 0 && (
+        <table
+          border="1"
+          cellPadding="8"
+          style={{ borderCollapse: "collapse", width: "100%" }}
+        >
+          <thead style={{ background: "#f2f2f2" }}>
             <tr>
               <th>#</th>
               <th>No Matrik</th>
@@ -71,9 +56,9 @@ function AttendanceList({ sessionId }) {
             </tr>
           </thead>
           <tbody>
-            {records.map((r, i) => (
+            {records.map((r, index) => (
               <tr key={r.id}>
-                <td>{i + 1}</td>
+                <td>{index + 1}</td>
                 <td>{r.student_matric}</td>
                 <td>{new Date(r.timestamp).toLocaleString()}</td>
               </tr>
@@ -86,4 +71,5 @@ function AttendanceList({ sessionId }) {
 }
 
 export default AttendanceList;
+
 
