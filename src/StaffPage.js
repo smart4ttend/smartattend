@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { supabase } from "./supabase";
-import AttendanceList from "./AttendanceList";
+import AttendanceList from "./AttendanceList";  // <-- IMPORT TABLE SENARAI KEHADIRAN
 
 function StaffPage({ staffName }) {
   const [course, setCourse] = useState("");
-  const [qrToken, setQrToken] = useState(""); // token string
+  const [qrToken, setQrToken] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -17,11 +17,12 @@ function StaffPage({ staffName }) {
     try {
       setLoading(true);
 
-      // create a unique token for this attendance session
+      // Token unik QR
       const token = typeof crypto !== "undefined" && crypto.randomUUID
         ? crypto.randomUUID()
         : Math.random().toString(36).slice(2) + Date.now().toString(36);
 
+      // Insert session baru
       const { data, error } = await supabase
         .from("attendance_sessions")
         .insert([
@@ -49,25 +50,29 @@ function StaffPage({ staffName }) {
       setSessionId(data[0].id);
       setQrToken(token);
       setLoading(false);
+
     } catch (e) {
-      setLoading(false);
       alert("Unexpected error: " + e.message);
+      setLoading(false);
     }
   };
 
-  // build full URL & QR API url when qrToken present
+  // Build QR URL
   const fullUrl = qrToken ? `${window.location.origin}/attendance?token=${qrToken}` : "";
   const qrApi = qrToken
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(fullUrl)}`
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(fullUrl)}`
     : "";
 
   return (
     <div style={{ padding: 30, fontFamily: "Arial, sans-serif", maxWidth: 900 }}>
+      
+      {/* ⭐ TITLE */}
       <h2 style={{ marginBottom: 8 }}>Welcome, {staffName}</h2>
 
+      {/* ⭐ Create Session Form */}
       <h3 style={{ marginTop: 20 }}>Create Attendance Session</h3>
 
-      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 12 }}>
+      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 18 }}>
         <input
           style={{ padding: 8, width: 300, borderRadius: 6, border: "1px solid #ccc" }}
           placeholder="Course Code (e.g. DIT101)"
@@ -90,20 +95,20 @@ function StaffPage({ staffName }) {
         </button>
       </div>
 
-      {/* If qrToken exists, show a single nicely styled card */}
+      {/* ⭐ QR Code Card */}
       {qrToken && (
         <div
           style={{
             marginTop: 20,
-            padding: "20px",
+            padding: 20,
             border: "1px solid #e6e6e6",
             borderRadius: 10,
             maxWidth: 420,
             background: "#fff",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
           }}
         >
-          <h3 style={{ marginTop: 0, marginBottom: 12, color: "#222" }}>
+          <h3 style={{ marginTop: 0, marginBottom: 14 }}>
             QR Code untuk Attendance
           </h3>
 
@@ -112,26 +117,20 @@ function StaffPage({ staffName }) {
               src={qrApi}
               alt="QR Code"
               style={{
-                width: 220,
-                height: 220,
+                width: 240,
+                height: 240,
                 borderRadius: 8,
-                boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
-                background: "white",
+                boxShadow: "0 6px 20px rgba(0,0,0,0.10)",
               }}
             />
           </div>
 
           <div style={{ marginTop: 14 }}>
-            <p style={{ margin: "6px 0" }}>
-              <strong>Session ID:</strong> {sessionId}
-            </p>
-            <p style={{ margin: "6px 0" }}>
-              <strong>QR Token:</strong> {qrToken}
-            </p>
+            <p><strong>Session ID:</strong> {sessionId}</p>
+            <p><strong>QR Token:</strong> {qrToken}</p>
 
-            <p style={{ marginTop: 10 }}>
-              <strong>Link:</strong>
-              <br />
+            <p>
+              <strong>Link:</strong><br />
               <a href={fullUrl} target="_blank" rel="noreferrer" style={{ color: "#0070f3" }}>
                 {fullUrl}
               </a>
@@ -143,12 +142,16 @@ function StaffPage({ staffName }) {
           </div>
         </div>
       )}
+
+      {/* ⭐⭐ SENARAI KEHADIRAN ⭐⭐ */}
+      {sessionId && (
+        <div style={{ marginTop: 35 }}>
+          <AttendanceList sessionId={sessionId} />  {/* <-- TABLE DIPAPARKAN DI SINI */}
+        </div>
+      )}
     </div>
   );
 }
 
 export default StaffPage;
-
-
-
 
