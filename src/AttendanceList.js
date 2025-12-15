@@ -5,17 +5,22 @@ function AttendanceList({ sessionId }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔄 Fetch attendance records
   const fetchRecords = async () => {
     if (!sessionId) return;
 
     console.log("Fetching records for session:", sessionId);
-
     setLoading(true);
 
     const { data, error } = await supabase
       .from("attendance_records")
-      .select("id, student_matric, timestamp")
+      .select(`
+        id,
+        student_matric,
+        timestamp,
+        students (
+          name
+        )
+      `)
       .eq("session_id", sessionId)
       .order("timestamp", { ascending: false });
 
@@ -30,11 +35,10 @@ function AttendanceList({ sessionId }) {
     setLoading(false);
   };
 
-  // 📌 Load once + auto refresh setiap 3 saat
+  // 🔄 Auto refresh
   useEffect(() => {
     fetchRecords();
-
-    const interval = setInterval(fetchRecords, 3000); // auto refresh
+    const interval = setInterval(fetchRecords, 3000);
     return () => clearInterval(interval);
   }, [sessionId]);
 
@@ -52,12 +56,13 @@ function AttendanceList({ sessionId }) {
         <table
           border="1"
           cellPadding="8"
-          style={{ borderCollapse: "collapse", marginTop: 10, width: "100%" }}
+          style={{ borderCollapse: "collapse", width: "100%" }}
         >
           <thead>
             <tr style={{ background: "#f2f2f2" }}>
               <th>#</th>
               <th>Matric No</th>
+              <th>Nama Pelajar</th>
               <th>Masa</th>
             </tr>
           </thead>
@@ -66,6 +71,7 @@ function AttendanceList({ sessionId }) {
               <tr key={r.id}>
                 <td>{index + 1}</td>
                 <td>{r.student_matric}</td>
+                <td>{r.students?.name || "-"}</td>
                 <td>{new Date(r.timestamp).toLocaleString()}</td>
               </tr>
             ))}
