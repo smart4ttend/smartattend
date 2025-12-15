@@ -51,7 +51,6 @@ function StaffPage({ staffName, logout }) {
           {
             course_code: course.trim(),
             token: token,
-            expires_at: expiresAtValue,
           },
         ])
         .select()
@@ -165,3 +164,4 @@ function StaffPage({ staffName, logout }) {
 }
 
 export default StaffPage;
+
