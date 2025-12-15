@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import LoginPage from "./LoginPage";
 import StaffPage from "./StaffPage";
 import AttendancePage from "./AttendancePage";
@@ -7,7 +7,7 @@ function App() {
   const [userType, setUserType] = useState(null);
   const [userId, setUserId] = useState(null);
 
-  // 🔹 Restore login selepas refresh
+  // 🔁 Load login from localStorage
   useEffect(() => {
     const savedType = localStorage.getItem("userType");
     const savedId = localStorage.getItem("userId");
@@ -18,6 +18,7 @@ function App() {
     }
   }, []);
 
+  // ✅ Called after successful login
   const handleLogin = (type, id) => {
     setUserType(type);
     setUserId(id);
@@ -25,26 +26,61 @@ function App() {
     localStorage.setItem("userId", id);
   };
 
+  // 🚪 Logout
   const handleLogout = () => {
+    localStorage.clear();
     setUserType(null);
     setUserId(null);
-    localStorage.removeItem("userType");
-    localStorage.removeItem("userId");
   };
 
-  // 🔹 STAFF
+  // ======================
+  // ROUTING LOGIC
+  // ======================
+  if (!userType) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
   if (userType === "staff") {
-    return <StaffPage staffName={userId} logout={handleLogout} />;
+    return (
+      <>
+        <button
+          onClick={handleLogout}
+          style={{
+            position: "fixed",
+            top: 10,
+            right: 10,
+            padding: "6px 12px",
+          }}
+        >
+          Logout
+        </button>
+
+        <StaffPage staffName={userId} />
+      </>
+    );
   }
 
-  // 🔹 STUDENT (QR attendance)
   if (userType === "student") {
-    return <AttendancePage />;
+    return (
+      <>
+        <button
+          onClick={handleLogout}
+          style={{
+            position: "fixed",
+            top: 10,
+            right: 10,
+            padding: "6px 12px",
+          }}
+        >
+          Logout
+        </button>
+
+        <AttendancePage />
+      </>
+    );
   }
 
-  // 🔹 LOGIN
-  return <LoginPage onLogin={handleLogin} />;
+  return null;
 }
 
 export default App;
-
