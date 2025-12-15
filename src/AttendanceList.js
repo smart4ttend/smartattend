@@ -13,17 +13,16 @@ function AttendanceList({ sessionId }) {
     const fetchRecords = async () => {
       const { data, error } = await supabase
         .from("attendance_records")
-        .select("student_matric, timestamp")
-        .eq("session_id", sessionId)
+        .select("*")
+        .eq("session_id", String(sessionId))   // 🔥 FIX PENTING DI SINI
         .order("timestamp", { ascending: false });
 
       if (error) {
-        console.error("Error loading records:", error);
-        return;
+        console.error("Fetch error:", error);
       }
 
       console.log("DATA LOADED:", data);
-      setRecords(data);
+      setRecords(data || []);
       setLoading(false);
     };
 
@@ -31,32 +30,26 @@ function AttendanceList({ sessionId }) {
   }, [sessionId]);
 
   return (
-    <div style={{ marginTop: 30 }}>
+    <div style={{ marginTop: 25 }}>
       <h3>Senarai Kehadiran</h3>
 
-      {loading && <p>Memuatkan...</p>}
-
-      {!loading && records.length === 0 && (
+      {loading ? (
+        <p>Sedang memuat...</p>
+      ) : records.length === 0 ? (
         <p>Tiada rekod kehadiran setakat ini.</p>
-      )}
-
-      {records.length > 0 && (
-        <table
-          border="1"
-          cellPadding="8"
-          style={{ borderCollapse: "collapse", width: "100%", marginTop: 10 }}
-        >
+      ) : (
+        <table border="1" cellPadding="8" style={{ borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              <th>Student Matric</th>
-              <th>Masa Rekod</th>
+              <th>Student ID</th>
+              <th>Timestamp</th>
             </tr>
           </thead>
           <tbody>
-            {records.map((r, index) => (
-              <tr key={index}>
-                <td>{r.student_matric}</td>
-                <td>{new Date(r.timestamp).toLocaleString()}</td>
+            {records.map((rec) => (
+              <tr key={rec.id}>
+                <td>{rec.student_matric}</td>
+                <td>{new Date(rec.timestamp).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
