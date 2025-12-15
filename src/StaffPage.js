@@ -79,6 +79,34 @@ function StaffPage({ staffName, logout }) {
       <button onClick={createSession}>
         {loading ? "Creating..." : "Create Session"}
       </button>
+{qrToken && (
+  <div style={{ marginTop: 20 }}>
+    <h3>QR Code untuk Attendance</h3>
+
+    <img
+      src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+        `${window.location.origin}/attendance?token=${qrToken}`
+      )}`}
+      alt="QR Code"
+    />
+
+    <p><b>Session ID:</b> {sessionId}</p>
+    <p><b>QR Token:</b> {qrToken}</p>
+
+    <p>
+      <b>Link:</b><br />
+      <a
+        href={`${window.location.origin}/attendance?token=${qrToken}`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        {window.location.origin}/attendance?token={qrToken}
+      </a>
+    </p>
+
+    <p>📌 <i>Pelajar perlu scan QR ini untuk rekod kehadiran.</i></p>
+  </div>
+)}
 
       {sessionId && <AttendanceList sessionId={sessionId} />}
     </div>
@@ -86,6 +114,7 @@ function StaffPage({ staffName, logout }) {
 }
 
 export default StaffPage;
+
 
 
 
