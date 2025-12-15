@@ -165,10 +165,3 @@ function StaffPage({ staffName, logout }) {
 }
 
 export default StaffPage;
-
-
-
-
-
-
-
