@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
 function AttendanceList({ sessionId }) {
+console.log("AttendanceList rendered, sessionId =", sessionId);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
