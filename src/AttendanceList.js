@@ -3,58 +3,61 @@ import { supabase } from "./supabase";
 
 function AttendanceList({ sessionId }) {
   const [records, setRecords] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!sessionId) return;
 
     const fetchRecords = async () => {
+      console.log("Fetching records for session:", sessionId);
+      setLoading(true);
+
       const { data, error } = await supabase
         .from("attendance_records")
-        .select("*")
+        .select("id, student_matric, timestamp")
         .eq("session_id", sessionId)
         .order("timestamp", { ascending: true });
 
-      if (!error) setRecords(data || []);
+      if (error) {
+        console.error("Fetch error:", error.message);
+      } else {
+        console.log("DATA LOADED:", data);
+        setRecords(data || []);
+      }
+
+      setLoading(false);
     };
 
     fetchRecords();
-
-    const channel = supabase
-      .channel("attendance-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "attendance_records",
-          filter: `session_id=eq.${sessionId}`,
-        },
-        fetchRecords
-      )
-      .subscribe();
-
-    return () => supabase.removeChannel(channel);
   }, [sessionId]);
 
   return (
-    <div style={{ marginTop: 20 }}>
+    <div style={{ marginTop: 30 }}>
       <h3>Senarai Kehadiran</h3>
 
-      {records.length === 0 && <p>Tiada rekod kehadiran setakat ini.</p>}
+      {loading && <p>Memuatkan data...</p>}
 
-      {records.length > 0 && (
-        <table border="1" cellPadding="6">
+      {!loading && records.length === 0 && (
+        <p>Tiada rekod kehadiran setakat ini.</p>
+      )}
+
+      {!loading && records.length > 0 && (
+        <table
+          border="1"
+          cellPadding="8"
+          style={{ borderCollapse: "collapse", marginTop: 10 }}
+        >
           <thead>
             <tr>
-              <th>#</th>
-              <th>No Matrik</th>
-              <th>Masa</th>
+              <th>No</th>
+              <th>Matric No</th>
+              <th>Masa Kehadiran</th>
             </tr>
           </thead>
           <tbody>
-            {records.map((r, i) => (
+            {records.map((r, index) => (
               <tr key={r.id}>
-                <td>{i + 1}</td>
+                <td>{index + 1}</td>
                 <td>{r.student_matric}</td>
                 <td>{new Date(r.timestamp).toLocaleString()}</td>
               </tr>
@@ -67,5 +70,4 @@ function AttendanceList({ sessionId }) {
 }
 
 export default AttendanceList;
-
 
