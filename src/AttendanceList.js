@@ -1,26 +1,41 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
-function AttendanceList({ sessionId }) {
+function AttendanceList({ qrToken }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!sessionId) return;
-
-    console.log("Fetching records for session:", sessionId);
+    if (!qrToken) return;
 
     const fetchRecords = async () => {
       setLoading(true);
 
+      // 1️⃣ Cari session berdasarkan TOKEN
+      const { data: sessions, error: sessionErr } = await supabase
+        .from("attendance_sessions")
+        .select("id")
+        .eq("token", qrToken)
+        .limit(1);
+
+      if (sessionErr || !sessions || sessions.length === 0) {
+        console.error("Session not found for token");
+        setLoading(false);
+        return;
+      }
+
+      const sessionId = sessions[0].id;
+      console.log("Resolved sessionId:", sessionId);
+
+      // 2️⃣ Fetch attendance berdasarkan sessionId sebenar
       const { data, error } = await supabase
         .from("attendance_records")
-        .select("*")                // ❗ TIADA JOIN
+        .select("*")
         .eq("session_id", sessionId)
         .order("timestamp", { ascending: false });
 
       if (error) {
-        console.error("Fetch error:", error.message);
+        console.error("Fetch attendance error:", error.message);
       } else {
         console.log("DATA LOADED:", data);
         setRecords(data || []);
@@ -30,7 +45,7 @@ function AttendanceList({ sessionId }) {
     };
 
     fetchRecords();
-  }, [sessionId]);
+  }, [qrToken]);
 
   return (
     <div style={{ marginTop: 30 }}>
