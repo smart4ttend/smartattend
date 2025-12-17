@@ -2,21 +2,22 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
 function AttendanceList({ sessionId }) {
-console.log("AttendanceList rendered, sessionId =", sessionId);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!sessionId) return;
 
+    console.log("Fetching records for session:", sessionId);
+
     const fetchRecords = async () => {
-      console.log("Fetching records for session:", sessionId);
+      setLoading(true);
 
       const { data, error } = await supabase
         .from("attendance_records")
-        .select("id, student_matric, timestamp")
+        .select("*")                // ❗ TIADA JOIN
         .eq("session_id", sessionId)
-        .order("timestamp", { ascending: true });
+        .order("timestamp", { ascending: false });
 
       if (error) {
         console.error("Fetch error:", error.message);
@@ -31,33 +32,29 @@ console.log("AttendanceList rendered, sessionId =", sessionId);
     fetchRecords();
   }, [sessionId]);
 
-  if (loading) {
-    return <p>Loading attendance...</p>;
-  }
-
   return (
     <div style={{ marginTop: 30 }}>
       <h3>Senarai Kehadiran</h3>
 
-      {records.length === 0 ? (
+      {loading && <p>Memuatkan data...</p>}
+
+      {!loading && records.length === 0 && (
         <p>Tiada rekod kehadiran setakat ini.</p>
-      ) : (
-        <table
-          border="1"
-          cellPadding="8"
-          style={{ borderCollapse: "collapse", marginTop: 10 }}
-        >
+      )}
+
+      {!loading && records.length > 0 && (
+        <table border="1" cellPadding="8">
           <thead>
             <tr>
-              <th>No</th>
-              <th>Matric No</th>
-              <th>Masa Kehadiran</th>
+              <th>Bil</th>
+              <th>ID Pelajar</th>
+              <th>Masa</th>
             </tr>
           </thead>
           <tbody>
-            {records.map((r, index) => (
+            {records.map((r, i) => (
               <tr key={r.id}>
-                <td>{index + 1}</td>
+                <td>{i + 1}</td>
                 <td>{r.student_matric}</td>
                 <td>{new Date(r.timestamp).toLocaleString()}</td>
               </tr>
