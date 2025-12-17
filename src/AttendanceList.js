@@ -5,41 +5,49 @@ function AttendanceList({ sessionId }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchRecords = async () => {
+  useEffect(() => {
     if (!sessionId) return;
 
-    console.log("Fetching records for session:", sessionId);
-    setLoading(true);
+    const fetchRecords = async () => {
+      setLoading(true);
 
-    const { data, error } = await supabase
-      .from("attendance_records")
-      .select(`
-        id,
-        student_matric,
-        timestamp,
-        students (
-          name
-        )
-      `)
-      .eq("session_id", sessionId)
-      .order("timestamp", { ascending: false });
+      const { data, error } = await supabase
+        .from("attendance_records")
+        .select("id, student_matric, timestamp")
+        .eq("session_id", sessionId)
+        .order("timestamp", { ascending: true });
 
-    if (error) {
-      console.error("Fetch error:", error.message);
+      if (error) {
+        console.error("Fetch error:", error.message);
+      } else {
+        setRecords(data || []);
+      }
+
       setLoading(false);
-      return;
-    }
+    };
 
-    console.log("DATA LOADED:", data);
-    setRecords(data || []);
-    setLoading(false);
-  };
-
-  // 🔄 Auto refresh
-  useEffect(() => {
     fetchRecords();
-    const interval = setInterval(fetchRecords, 3000);
-    return () => clearInterval(interval);
+
+    // 🔄 AUTO UPDATE (Realtime)
+    const channel = supabase
+      .channel("attendance-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "attendance_records",
+          filter: `session_id=eq.${sessionId}`,
+        },
+        () => {
+          fetchRecords();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [sessionId]);
 
   return (
@@ -53,25 +61,19 @@ function AttendanceList({ sessionId }) {
       )}
 
       {!loading && records.length > 0 && (
-        <table
-          border="1"
-          cellPadding="8"
-          style={{ borderCollapse: "collapse", width: "100%" }}
-        >
+        <table border="1" cellPadding="8">
           <thead>
-            <tr style={{ background: "#f2f2f2" }}>
+            <tr>
               <th>#</th>
-              <th>Matric No</th>
-              <th>Nama Pelajar</th>
+              <th>No. Matrik</th>
               <th>Masa</th>
             </tr>
           </thead>
           <tbody>
-            {records.map((r, index) => (
+            {records.map((r, i) => (
               <tr key={r.id}>
-                <td>{index + 1}</td>
+                <td>{i + 1}</td>
                 <td>{r.student_matric}</td>
-                <td>{r.students?.name || "-"}</td>
                 <td>{new Date(r.timestamp).toLocaleString()}</td>
               </tr>
             ))}
