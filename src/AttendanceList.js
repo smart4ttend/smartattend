@@ -10,7 +10,6 @@ function AttendanceList({ sessionId }) {
 
     const fetchRecords = async () => {
       console.log("Fetching records for session:", sessionId);
-      setLoading(true);
 
       const { data, error } = await supabase
         .from("attendance_records")
@@ -31,17 +30,17 @@ function AttendanceList({ sessionId }) {
     fetchRecords();
   }, [sessionId]);
 
+  if (loading) {
+    return <p>Loading attendance...</p>;
+  }
+
   return (
     <div style={{ marginTop: 30 }}>
       <h3>Senarai Kehadiran</h3>
 
-      {loading && <p>Memuatkan data...</p>}
-
-      {!loading && records.length === 0 && (
+      {records.length === 0 ? (
         <p>Tiada rekod kehadiran setakat ini.</p>
-      )}
-
-      {!loading && records.length > 0 && (
+      ) : (
         <table
           border="1"
           cellPadding="8"
@@ -70,4 +69,5 @@ function AttendanceList({ sessionId }) {
 }
 
 export default AttendanceList;
+
 
