@@ -8,58 +8,57 @@ function AttendanceList({ sessionId }) {
   useEffect(() => {
     if (!sessionId) return;
 
-    const fetchRecords = async () => {
-      console.log("📥 Fetching attendance for session:", sessionId);
+    console.log("📥 Fetching attendance for session:", sessionId);
+
+    const fetchAttendance = async () => {
+      setLoading(true);
 
       const { data, error } = await supabase
         .from("attendance_records")
-        .select("student_matric, timestamp")
+        .select("*")
         .eq("session_id", sessionId)
-        .order("timestamp", { ascending: true });
+        .order("timestamp", { ascending: false });
 
       if (error) {
         console.error("❌ Fetch error:", error.message);
-        setRecords([]);
-      } else {
-        console.log("✅ Attendance data:", data);
-        setRecords(data || []);
+        setLoading(false);
+        return;
       }
 
+      console.log("✅ Attendance data:", data);
+      setRecords(data || []);
       setLoading(false);
     };
 
-    fetchRecords();
+    fetchAttendance();
   }, [sessionId]);
 
+  // ================= UI =================
+  if (loading) {
+    return <p>Memuatkan kehadiran...</p>;
+  }
+
   return (
-    <div style={{ marginTop: 30 }}>
+    <div>
       <h3>Senarai Kehadiran</h3>
 
-      {loading && <p>Memuatkan data...</p>}
-
-      {!loading && records.length === 0 && (
+      {records.length === 0 ? (
         <p>Tiada rekod kehadiran setakat ini.</p>
-      )}
-
-      {!loading && records.length > 0 && (
-        <table
-          border="1"
-          cellPadding="8"
-          style={{ borderCollapse: "collapse", marginTop: 10 }}
-        >
-          <thead style={{ background: "#f0f0f0" }}>
+      ) : (
+        <table border="1" cellPadding="6" style={{ borderCollapse: "collapse" }}>
+          <thead>
             <tr>
               <th>No</th>
-              <th>No Matrik</th>
-              <th>Masa Kehadiran</th>
+              <th>No Matriks</th>
+              <th>Masa</th>
             </tr>
           </thead>
           <tbody>
-            {records.map((r, index) => (
-              <tr key={index}>
+            {records.map((row, index) => (
+              <tr key={row.id}>
                 <td>{index + 1}</td>
-                <td>{r.student_matric}</td>
-                <td>{new Date(r.timestamp).toLocaleString()}</td>
+                <td>{row.student_matric}</td>
+                <td>{new Date(row.timestamp).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
