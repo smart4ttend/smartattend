@@ -1,73 +1,63 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
-function AttendanceList({ qrToken }) {
+function AttendanceList({ sessionId }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!qrToken) return;
+    if (!sessionId) return;
 
-    const fetchAttendance = async () => {
-      setLoading(true);
-      console.log("🔍 QR TOKEN:", qrToken);
+    const fetchRecords = async () => {
+      console.log("📥 Fetching attendance for session:", sessionId);
 
-      // 1️⃣ Cari session berdasarkan TOKEN
-      const { data: sessionData, error: sessionErr } = await supabase
-        .from("attendance_sessions")
-        .select("id")
-        .eq("token", qrToken)
-        .single();
-
-      if (sessionErr || !sessionData) {
-        console.error("❌ Session not found", sessionErr);
-        setLoading(false);
-        return;
-      }
-
-      console.log("✅ SESSION ID:", sessionData.id);
-
-      // 2️⃣ Fetch attendance berdasarkan SESSION ID
       const { data, error } = await supabase
         .from("attendance_records")
         .select("student_matric, timestamp")
-        .eq("session_id", sessionData.id)
+        .eq("session_id", sessionId)
         .order("timestamp", { ascending: true });
 
       if (error) {
-        console.error("❌ Fetch attendance error:", error);
+        console.error("❌ Fetch error:", error.message);
+        setRecords([]);
       } else {
-        console.log("📦 ATTENDANCE DATA:", data);
+        console.log("✅ Attendance data:", data);
         setRecords(data || []);
       }
 
       setLoading(false);
     };
 
-    fetchAttendance();
-  }, [qrToken]);
-
-  if (loading) return <p>Loading attendance...</p>;
+    fetchRecords();
+  }, [sessionId]);
 
   return (
     <div style={{ marginTop: 30 }}>
       <h3>Senarai Kehadiran</h3>
 
-      {records.length === 0 ? (
+      {loading && <p>Memuatkan data...</p>}
+
+      {!loading && records.length === 0 && (
         <p>Tiada rekod kehadiran setakat ini.</p>
-      ) : (
-        <table border="1" cellPadding="8">
-          <thead>
+      )}
+
+      {!loading && records.length > 0 && (
+        <table
+          border="1"
+          cellPadding="8"
+          style={{ borderCollapse: "collapse", marginTop: 10 }}
+        >
+          <thead style={{ background: "#f0f0f0" }}>
             <tr>
               <th>No</th>
-              <th>Student ID</th>
-              <th>Masa</th>
+              <th>No Matrik</th>
+              <th>Masa Kehadiran</th>
             </tr>
           </thead>
           <tbody>
-            {records.map((r, i) => (
-              <tr key={i}>
-                <td>{i + 1}</td>
+            {records.map((r, index) => (
+              <tr key={index}>
+                <td>{index + 1}</td>
                 <td>{r.student_matric}</td>
                 <td>{new Date(r.timestamp).toLocaleString()}</td>
               </tr>
@@ -80,5 +70,3 @@ function AttendanceList({ qrToken }) {
 }
 
 export default AttendanceList;
-
-
