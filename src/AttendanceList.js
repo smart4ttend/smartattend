@@ -8,67 +8,65 @@ function AttendanceList({ qrToken }) {
   useEffect(() => {
     if (!qrToken) return;
 
-    const fetchRecords = async () => {
+    const fetchAttendance = async () => {
       setLoading(true);
+      console.log("🔍 QR TOKEN:", qrToken);
 
       // 1️⃣ Cari session berdasarkan TOKEN
-      const { data: sessions, error: sessionErr } = await supabase
+      const { data: sessionData, error: sessionErr } = await supabase
         .from("attendance_sessions")
         .select("id")
         .eq("token", qrToken)
-        .limit(1);
+        .single();
 
-      if (sessionErr || !sessions || sessions.length === 0) {
-        console.error("Session not found for token");
+      if (sessionErr || !sessionData) {
+        console.error("❌ Session not found", sessionErr);
         setLoading(false);
         return;
       }
 
-      const sessionId = sessions[0].id;
-      console.log("Resolved sessionId:", sessionId);
+      console.log("✅ SESSION ID:", sessionData.id);
 
-      // 2️⃣ Fetch attendance berdasarkan sessionId sebenar
+      // 2️⃣ Fetch attendance berdasarkan SESSION ID
       const { data, error } = await supabase
         .from("attendance_records")
-        .select("*")
-        .eq("session_id", sessionId)
-        .order("timestamp", { ascending: false });
+        .select("student_matric, timestamp")
+        .eq("session_id", sessionData.id)
+        .order("timestamp", { ascending: true });
 
       if (error) {
-        console.error("Fetch attendance error:", error.message);
+        console.error("❌ Fetch attendance error:", error);
       } else {
-        console.log("DATA LOADED:", data);
+        console.log("📦 ATTENDANCE DATA:", data);
         setRecords(data || []);
       }
 
       setLoading(false);
     };
 
-    fetchRecords();
+    fetchAttendance();
   }, [qrToken]);
+
+  if (loading) return <p>Loading attendance...</p>;
 
   return (
     <div style={{ marginTop: 30 }}>
       <h3>Senarai Kehadiran</h3>
 
-      {loading && <p>Memuatkan data...</p>}
-
-      {!loading && records.length === 0 && (
+      {records.length === 0 ? (
         <p>Tiada rekod kehadiran setakat ini.</p>
-      )}
-
-      {!loading && records.length > 0 && (
+      ) : (
         <table border="1" cellPadding="8">
           <thead>
             <tr>
-              <th>Bil</th>
-              <th>ID Pelajar</th>
+              <th>No</th>
+              <th>Student ID</th>
               <th>Masa</th>
             </tr>
           </thead>
           <tbody>
             {records.map((r, i) => (
-              <tr key={r.id}>
+              <tr key={i}>
                 <td>{i + 1}</td>
                 <td>{r.student_matric}</td>
                 <td>{new Date(r.timestamp).toLocaleString()}</td>
