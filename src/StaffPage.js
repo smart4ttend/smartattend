@@ -5,7 +5,7 @@ import AttendanceList from "./AttendanceList";
 function StaffPage({ staffName, logout }) {
 
   // ===============================
-  // 1️⃣ HOOKS (WAJIB DI ATAS)
+  // 1️⃣ STATE (HOOKS WAJIB DI ATAS)
   // ===============================
   const [course, setCourse] = useState("");
   const [qrToken, setQrToken] = useState("");
@@ -29,7 +29,7 @@ function StaffPage({ staffName, logout }) {
   }
 
   // ===============================
-  // 3️⃣ CREATE SESSION + EXPIRE TIME
+  // 3️⃣ CREATE ATTENDANCE SESSION
   // ===============================
   const createSession = async () => {
     if (!course.trim()) {
@@ -41,9 +41,7 @@ function StaffPage({ staffName, logout }) {
       setLoading(true);
 
       const token = crypto.randomUUID();
-
-      // ⏱️ QR tamat selepas 10 minit
-      const expiresAtValue = new Date(Date.now() + 10 * 60 * 1000);
+      const expiresAtValue = new Date(Date.now() + 10 * 60 * 1000); // 10 min
 
       const { data, error } = await supabase
         .from("attendance_sessions")
@@ -54,31 +52,31 @@ function StaffPage({ staffName, logout }) {
           },
         ])
         .select()
-        .limit(1);
+        .single();
 
       if (error) throw error;
 
-      setSessionId(data[0].id);
+      setSessionId(data.id);
       setQrToken(token);
       setExpiresAt(expiresAtValue);
       setLoading(false);
 
-    } catch (e) {
-      alert("Error: " + e.message);
+    } catch (err) {
+      alert("Error: " + err.message);
       setLoading(false);
     }
   };
 
   // ===============================
-  // 4️⃣ QR URL
+  // 4️⃣ QR URL & IMAGE
   // ===============================
-  const fullUrl = qrToken
+  const qrUrl = qrToken
     ? `${window.location.origin}/attendance?token=${qrToken}`
     : "";
 
-  const qrApi = qrToken
+  const qrImage = qrToken
     ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
-        fullUrl
+        qrUrl
       )}`
     : "";
 
@@ -89,6 +87,7 @@ function StaffPage({ staffName, logout }) {
     <div style={{ padding: 30, maxWidth: 900 }}>
       <h2>Welcome, {staffName}</h2>
 
+      {/* ===== TOP ACTION BAR ===== */}
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <button
           onClick={logout}
@@ -115,7 +114,7 @@ function StaffPage({ staffName, logout }) {
         </button>
       </div>
 
-      {/* ================= QR CARD ================= */}
+      {/* ===== QR CARD ===== */}
       {qrToken && (
         <div
           style={{
@@ -128,23 +127,21 @@ function StaffPage({ staffName, logout }) {
         >
           <h3>QR Code untuk Attendance</h3>
 
-          <img src={qrApi} alt="QR Code" />
+          <img src={qrImage} alt="QR Code" />
 
           <p><b>Session ID:</b> {sessionId}</p>
           <p><b>QR Token:</b> {qrToken}</p>
 
           <p>
             <b>Link:</b><br />
-            <a href={fullUrl} target="_blank" rel="noreferrer">
-              {fullUrl}
+            <a href={qrUrl} target="_blank" rel="noreferrer">
+              {qrUrl}
             </a>
           </p>
 
           <p>
             <b>QR Tamat:</b>{" "}
-            {expiresAt
-              ? new Date(expiresAt).toLocaleTimeString()
-              : "-"}
+            {expiresAt ? new Date(expiresAt).toLocaleTimeString() : "-"}
           </p>
 
           <p style={{ color: "#555" }}>
@@ -153,16 +150,14 @@ function StaffPage({ staffName, logout }) {
         </div>
       )}
 
-      {/* ================= SENARAI KEHADIRAN ================= */}
-{qrToken && (
-  <div style={{ marginTop: 30 }}>
-    <AttendanceList qrToken={qrToken} />
-  </div>
-)}
+      {/* ===== SENARAI KEHADIRAN (INI PALING PENTING) ===== */}
+      {sessionId && (
+        <div style={{ marginTop: 30 }}>
+          <AttendanceList sessionId={sessionId} />
+        </div>
+      )}
     </div>
   );
 }
 
 export default StaffPage;
-
-
