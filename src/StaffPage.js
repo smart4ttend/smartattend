@@ -154,14 +154,15 @@ function StaffPage({ staffName, logout }) {
       )}
 
       {/* ================= SENARAI KEHADIRAN ================= */}
-      {sessionId && (
-        <div style={{ marginTop: 30 }}>
-          <AttendanceList sessionId={sessionId} />
-        </div>
-      )}
+{qrToken && (
+  <div style={{ marginTop: 30 }}>
+    <AttendanceList qrToken={qrToken} />
+  </div>
+)}
     </div>
   );
 }
 
 export default StaffPage;
+
 
