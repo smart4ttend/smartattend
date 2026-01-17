@@ -1,55 +1,103 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
 function AttendancePage() {
-  // Ambil session_id terus dari URL (QR)
   const params = new URLSearchParams(window.location.search);
   const sessionId = params.get("session_id");
 
   const [studentMatric, setStudentMatric] = useState("");
+  const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   // ===============================
-  // SUBMIT KEHADIRAN
+  // 1️⃣ AMBIL DATA SESSION (MASA)
   // ===============================
-  const submitAttendance = async () => {
+  useEffect(() => {
     if (!sessionId) {
       setErrorMsg("Session tidak sah. Sila scan QR yang betul.");
       return;
     }
 
+    const fetchSession = async () => {
+      const { data, error } = await supabase
+        .from("attendance_sessions")
+        .select("class_start_at, late_after, expires_at")
+        .eq("id", sessionId)
+        .single();
+
+      if (error || !data) {
+        setErrorMsg("Session tidak dijumpai.");
+        return;
+      }
+
+      setSession(data);
+    };
+
+    fetchSession();
+  }, [sessionId]);
+
+  // ===============================
+  // 2️⃣ SUBMIT KEHADIRAN
+  // ===============================
+  const submitAttendance = async () => {
     if (!studentMatric.trim()) {
       alert("Sila masukkan No Matriks");
       return;
     }
 
+    if (!session) {
+      alert("Session tidak sah");
+      return;
+    }
+
+    // Tentukan status berdasarkan masa
+    const now = new Date();
+    const expiresAt = new Date(session.expires_at);
+    const lateAfter = session.late_after
+      ? new Date(session.late_after)
+      : null;
+
+    if (now > expiresAt) {
+      alert("❌ Sesi ini telah tamat. Kehadiran ditolak.");
+      return;
+    }
+
+    let status = "HADIR";
+    if (lateAfter && now > lateAfter) {
+      status = "LAMBAT";
+    }
+
     try {
       setLoading(true);
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("attendance_records")
         .insert([
           {
-            session_id: sessionId,              // 🔥 SINGLE SOURCE OF TRUTH
+            session_id: sessionId,
             student_matric: studentMatric.trim(),
+            status, // 🔥 HADIR / LAMBAT
           },
-        ])
-        .select();
-      console.log("SESSION_ID DARIPADA QR:", sessionId);
-      console.log("INSERT DATA:", data);
-      console.log("INSERT ERROR:", error);
-      console.log("INSERT KE SESSION:", sessionId);
+        ]);
 
       if (error) {
-        alert("Rekod gagal: " + error.message);
+        // Duplicate (unique constraint)
+        if (error.code === "23505") {
+          alert("❌ Anda telah merekod kehadiran untuk sesi ini.");
+        } else {
+          alert("❌ Rekod gagal: " + error.message);
+        }
         return;
       }
 
-      alert("Kehadiran berjaya direkod");
-      setStudentMatric(""); // reset input
-    } catch (err) {
-      alert("Ralat tidak dijangka");
+      alert(
+        status === "LAMBAT"
+          ? "⚠️ Kehadiran direkod sebagai LAMBAT."
+          : "✅ Kehadiran berjaya direkod."
+      );
+
+      setStudentMatric("");
     } finally {
       setLoading(false);
     }
@@ -67,14 +115,24 @@ function AttendancePage() {
     );
   }
 
+  if (!session) {
+    return (
+      <div style={{ padding: 30 }}>
+        <p>Memuatkan sesi...</p>
+      </div>
+    );
+  }
+
   // ===============================
   // UI UTAMA
   // ===============================
   return (
-    <div style={{ padding: 30, maxWidth: 400 }}>
+    <div style={{ padding: 30, maxWidth: 420 }}>
       <h3>Rekod Kehadiran</h3>
 
-      <p>Sila masukkan No Matriks untuk rekod kehadiran.</p>
+      <p>
+        Sila masukkan <b>No Matriks</b>.
+      </p>
 
       <input
         type="text"
