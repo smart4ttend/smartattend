@@ -1,54 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { supabase } from "./supabase";
 
 function AttendancePage() {
-  // Ambil token dari URL (QR)
+  // Ambil session_id terus dari URL (QR)
   const params = new URLSearchParams(window.location.search);
-  const token = params.get("token");
+  const sessionId = params.get("session_id");
 
-  const [session, setSession] = useState(null);
   const [studentMatric, setStudentMatric] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   // ===============================
-  // 1️⃣ DAPATKAN SESSION BERDASARKAN TOKEN
-  // ===============================
-  useEffect(() => {
-    if (!token) {
-      setErrorMsg("QR tidak sah atau token tiada.");
-      return;
-    }
-
-    const fetchSession = async () => {
-      const { data, error } = await supabase
-        .from("attendance_sessions")
-        .select("*")
-        .eq("token", token)
-        .single();
-
-      if (error || !data) {
-        setErrorMsg("Session tidak dijumpai atau telah tamat.");
-        return;
-      }
-
-      setSession(data);
-    };
-
-    fetchSession();
-  }, [token]);
-
-  // ===============================
-  // 2️⃣ SUBMIT KEHADIRAN PELAJAR
+  // SUBMIT KEHADIRAN
   // ===============================
   const submitAttendance = async () => {
-    if (!studentMatric.trim()) {
-      alert("Sila masukkan No Matriks");
+    if (!sessionId) {
+      setErrorMsg("Session tidak sah. Sila scan QR yang betul.");
       return;
     }
 
-    if (!session?.id) {
-      alert("Session tidak sah");
+    if (!studentMatric.trim()) {
+      alert("Sila masukkan No Matriks");
       return;
     }
 
@@ -59,7 +31,7 @@ function AttendancePage() {
         .from("attendance_records")
         .insert([
           {
-            session_id: session.id,
+            session_id: sessionId,              // 🔥 SINGLE SOURCE OF TRUTH
             student_matric: studentMatric.trim(),
           },
         ])
@@ -69,7 +41,7 @@ function AttendancePage() {
       console.log("INSERT ERROR:", error);
 
       if (error) {
-        alert("INSERT GAGAL: " + error.message);
+        alert("Rekod gagal: " + error.message);
         return;
       }
 
@@ -83,7 +55,7 @@ function AttendancePage() {
   };
 
   // ===============================
-  // 3️⃣ UI STATES
+  // UI STATES
   // ===============================
   if (errorMsg) {
     return (
@@ -94,20 +66,13 @@ function AttendancePage() {
     );
   }
 
-  if (!session) {
-    return (
-      <div style={{ padding: 30 }}>
-        <p>Memuatkan session...</p>
-      </div>
-    );
-  }
-
   // ===============================
-  // 4️⃣ UI UTAMA
+  // UI UTAMA
   // ===============================
   return (
     <div style={{ padding: 30, maxWidth: 400 }}>
-      <h2>{session.course_code}</h2>
+      <h3>Rekod Kehadiran</h3>
+
       <p>Sila masukkan No Matriks untuk rekod kehadiran.</p>
 
       <input
