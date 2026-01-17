@@ -24,21 +24,32 @@ export default function AttendancePage() {
   }, [token]);
 
   const submitAttendance = async () => {
-    if (!studentId || !studentName) {
-      alert("Sila isi No Matrik dan Nama");
-      return;
-    }
+  if (!studentId || !studentName) {
+    alert("Sila isi No Matrik dan Nama");
+    return;
+  }
 
-    await supabase.from("attendance").insert([
+  const { data, error } = await supabase
+    .from("attendance")
+    .insert([
       {
         session_id: session.id,
         student_id: studentId,
         student_name: studentName,
       },
-    ]);
+    ])
+    .select();
 
-    alert("Kehadiran direkod");
-  };
+  console.log("INSERT DATA:", data);
+  console.log("INSERT ERROR:", error);
+
+  if (error) {
+    alert("INSERT GAGAL: " + error.message);
+    return;
+  }
+
+  alert("Kehadiran berjaya direkod");
+ };
 
   if (!token) return <p>QR tidak sah</p>;
   if (!session) return <p>Loading session...</p>;
