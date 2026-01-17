@@ -7,7 +7,15 @@ function App() {
   const [userType, setUserType] = useState(null);
   const [userId, setUserId] = useState(null);
 
+  // ===============================
+  // 1️⃣ CHECK URL DULU (PENTING)
+  // ===============================
+  const isAttendancePage =
+    window.location.pathname === "/attendance";
+
   useEffect(() => {
+    if (isAttendancePage) return; // ⛔ skip login check
+
     const savedType = localStorage.getItem("userType");
     const savedId = localStorage.getItem("userId");
 
@@ -15,8 +23,11 @@ function App() {
       setUserType(savedType);
       setUserId(savedId);
     }
-  }, []);
+  }, [isAttendancePage]);
 
+  // ===============================
+  // 2️⃣ LOGIN HANDLER
+  // ===============================
   const handleLogin = (type, id) => {
     setUserType(type);
     setUserId(id);
@@ -28,19 +39,25 @@ function App() {
     setUserType(null);
     setUserId(null);
     localStorage.clear();
+    window.location.href = "/"; // reset
   };
 
-  // 🔐 KUNCI ROLE
+  // ===============================
+  // 3️⃣ ROUTING LOGIC
+  // ===============================
+
+  // 🎓 PELAJAR SCAN QR (TANPA LOGIN)
+  if (isAttendancePage) {
+    return <AttendancePage />;
+  }
+
+  // 🧑‍🏫 STAFF
   if (userType === "staff") {
     return <StaffPage staffName={userId} logout={handleLogout} />;
   }
 
-  if (userType === "student") {
-    return <AttendancePage />;
-  }
-
+  // 🔐 LOGIN PAGE
   return <LoginPage onLogin={handleLogin} />;
 }
 
 export default App;
-
