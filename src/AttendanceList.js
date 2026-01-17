@@ -21,7 +21,6 @@ function AttendanceList({ sessionId }) {
         .from("attendance_records")
         .select("*")
         .eq("session_id", sessionId)
-        .order("created_at", { ascending: false });
 
       console.log("📊 Attendance fetch:", data, error);
 
