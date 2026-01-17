@@ -7,6 +7,7 @@ function StaffPage({ staffName, logout }) {
   const [sessionId, setSessionId] = useState(null);
   const [expiresAt, setExpiresAt] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   // ===============================
   // SAFETY CHECK – STAFF SAHAJA
@@ -22,7 +23,7 @@ function StaffPage({ staffName, logout }) {
   }
 
   // ===============================
-  // CREATE SESSION
+  // CREATE SESSION (INSERT DB)
   // ===============================
   const createSession = async () => {
     if (!course.trim()) {
@@ -32,6 +33,7 @@ function StaffPage({ staffName, logout }) {
 
     try {
       setLoading(true);
+      setErrorMsg("");
 
       const expiresAtValue = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -46,12 +48,18 @@ function StaffPage({ staffName, logout }) {
         .select()
         .single();
 
-      if (error) throw error;
+      console.log("CREATE SESSION DATA:", data);
+      console.log("CREATE SESSION ERROR:", error);
+
+      if (error) {
+        setErrorMsg("Gagal cipta session: " + error.message);
+        return;
+      }
 
       setSessionId(data.id);
       setExpiresAt(expiresAtValue);
-    } catch (e) {
-      alert("Gagal cipta session: " + e.message);
+    } catch (err) {
+      setErrorMsg("Ralat tidak dijangka semasa cipta session");
     } finally {
       setLoading(false);
     }
@@ -66,7 +74,7 @@ function StaffPage({ staffName, logout }) {
   };
 
   // ===============================
-  // QR URL (GUNA session_id TERUS)
+  // QR URL (GUNA session_id)
   // ===============================
   const APP_URL = "https://smartattend-psi.vercel.app";
   const qrUrl = sessionId
@@ -86,7 +94,8 @@ function StaffPage({ staffName, logout }) {
     <div style={{ padding: 30, maxWidth: 900 }}>
       <h2>Welcome, {staffName}</h2>
 
-      <div style={{ display: "flex", gap: 10 }}>
+      {/* ===== TOP BAR ===== */}
+      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <button onClick={logout}>Logout</button>
 
         <input
@@ -100,6 +109,11 @@ function StaffPage({ staffName, logout }) {
         </button>
       </div>
 
+      {errorMsg && (
+        <p style={{ color: "red", marginTop: 10 }}>{errorMsg}</p>
+      )}
+
+      {/* ===== QR SECTION ===== */}
       {sessionId && (
         <div style={{ marginTop: 25, border: "1px solid #ccc", padding: 20 }}>
           <img src={qrImage} alt="QR Code" />
@@ -123,6 +137,7 @@ function StaffPage({ staffName, logout }) {
         </div>
       )}
 
+      {/* ===== ATTENDANCE TABLE ===== */}
       {sessionId && (
         <div style={{ marginTop: 30 }}>
           <AttendanceList sessionId={sessionId} />
