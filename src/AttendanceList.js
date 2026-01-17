@@ -5,6 +5,9 @@ function AttendanceList({ sessionId }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ===============================
+  // FETCH ATTENDANCE (GUNA timestamp)
+  // ===============================
   const fetchAttendance = useCallback(async () => {
     if (!sessionId) return;
 
@@ -12,7 +15,9 @@ function AttendanceList({ sessionId }) {
       .from("attendance_records")
       .select("*")
       .eq("session_id", sessionId)
-      .order("created_at", { ascending: false });
+      .order("timestamp", { ascending: false }); // 🔥 GUNA timestamp
+
+    console.log("Attendance fetch:", data, error);
 
     if (!error) {
       setRecords(data || []);
@@ -20,14 +25,19 @@ function AttendanceList({ sessionId }) {
     }
   }, [sessionId]);
 
+  // ===============================
+  // AUTO REFRESH SETIAP 3 SAAT
+  // ===============================
   useEffect(() => {
-    fetchAttendance();
+    fetchAttendance(); // initial fetch
 
     const interval = setInterval(fetchAttendance, 3000);
     return () => clearInterval(interval);
   }, [fetchAttendance]);
 
-  if (loading) return <p>Memuatkan kehadiran...</p>;
+  if (loading) {
+    return <p>Memuatkan kehadiran...</p>;
+  }
 
   return (
     <div>
@@ -36,7 +46,11 @@ function AttendanceList({ sessionId }) {
       {records.length === 0 ? (
         <p>Tiada rekod kehadiran setakat ini.</p>
       ) : (
-        <table border="1" cellPadding="6" width="100%">
+        <table
+          border="1"
+          cellPadding="6"
+          style={{ borderCollapse: "collapse", width: "100%" }}
+        >
           <thead>
             <tr>
               <th>No</th>
@@ -45,11 +59,11 @@ function AttendanceList({ sessionId }) {
             </tr>
           </thead>
           <tbody>
-            {records.map((row, i) => (
+            {records.map((row, index) => (
               <tr key={row.id}>
-                <td>{i + 1}</td>
+                <td>{index + 1}</td>
                 <td>{row.student_matric}</td>
-                <td>{new Date(row.created_at).toLocaleString()}</td>
+                <td>{new Date(row.timestamp).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
