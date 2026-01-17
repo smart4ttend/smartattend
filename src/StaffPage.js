@@ -4,6 +4,11 @@ import AttendanceList from "./AttendanceList";
 
 function StaffPage({ staffName, logout }) {
   const [course, setCourse] = useState("");
+
+  const [classStart, setClassStart] = useState("");
+  const [lateAfter, setLateAfter] = useState("");
+  const [classEnd, setClassEnd] = useState("");
+
   const [sessionId, setSessionId] = useState(null);
   const [expiresAt, setExpiresAt] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -23,11 +28,20 @@ function StaffPage({ staffName, logout }) {
   }
 
   // ===============================
-  // CREATE SESSION (INSERT DB)
+  // CREATE SESSION
   // ===============================
   const createSession = async () => {
-    if (!course.trim()) {
-      alert("Sila masukkan Course Code");
+    if (!course || !classStart || !lateAfter || !classEnd) {
+      alert("Sila lengkapkan semua maklumat masa kelas.");
+      return;
+    }
+
+    const classStartAt = new Date(classStart);
+    const lateAfterAt = new Date(lateAfter);
+    const expiresAtValue = new Date(classEnd);
+
+    if (!(classStartAt < lateAfterAt && lateAfterAt < expiresAtValue)) {
+      alert("Susunan masa tidak sah.");
       return;
     }
 
@@ -35,46 +49,40 @@ function StaffPage({ staffName, logout }) {
       setLoading(true);
       setErrorMsg("");
 
-      const expiresAtValue = new Date(Date.now() + 10 * 60 * 1000);
-
       const { data, error } = await supabase
         .from("attendance_sessions")
         .insert([
           {
             course_code: course.trim(),
+            class_start_at: classStartAt,
+            late_after: lateAfterAt,
             expires_at: expiresAtValue,
           },
         ])
         .select()
         .single();
 
-      console.log("CREATE SESSION DATA:", data);
-      console.log("CREATE SESSION ERROR:", error);
-
       if (error) {
-        setErrorMsg("Gagal cipta session: " + error.message);
+        setErrorMsg(error.message);
         return;
       }
 
       setSessionId(data.id);
       setExpiresAt(expiresAtValue);
     } catch (err) {
-      setErrorMsg("Ralat tidak dijangka semasa cipta session");
+      setErrorMsg("Gagal cipta session.");
     } finally {
       setLoading(false);
     }
   };
 
-  // ===============================
-  // TAMATKAN SESSION (UI SAHAJA)
-  // ===============================
   const endSession = () => {
     setSessionId(null);
     setExpiresAt(null);
   };
 
   // ===============================
-  // QR URL (GUNA session_id)
+  // QR
   // ===============================
   const APP_URL = "https://smartattend-psi.vercel.app";
   const qrUrl = sessionId
@@ -94,8 +102,7 @@ function StaffPage({ staffName, logout }) {
     <div style={{ padding: 30, maxWidth: 900 }}>
       <h2>Welcome, {staffName}</h2>
 
-      {/* ===== TOP BAR ===== */}
-      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+      <div style={{ display: "grid", gap: 8, maxWidth: 360 }}>
         <button onClick={logout}>Logout</button>
 
         <input
@@ -104,40 +111,48 @@ function StaffPage({ staffName, logout }) {
           onChange={(e) => setCourse(e.target.value)}
         />
 
+        <label>Masa Mula Kelas</label>
+        <input
+          type="datetime-local"
+          value={classStart}
+          onChange={(e) => setClassStart(e.target.value)}
+        />
+
+        <label>Lambat Selepas</label>
+        <input
+          type="datetime-local"
+          value={lateAfter}
+          onChange={(e) => setLateAfter(e.target.value)}
+        />
+
+        <label>Masa Tamat Kelas</label>
+        <input
+          type="datetime-local"
+          value={classEnd}
+          onChange={(e) => setClassEnd(e.target.value)}
+        />
+
         <button onClick={createSession} disabled={loading || sessionId}>
           {loading ? "Creating..." : "Create Session"}
         </button>
+
+        {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
       </div>
 
-      {errorMsg && (
-        <p style={{ color: "red", marginTop: 10 }}>{errorMsg}</p>
-      )}
-
-      {/* ===== QR SECTION ===== */}
       {sessionId && (
         <div style={{ marginTop: 25, border: "1px solid #ccc", padding: 20 }}>
-          <img src={qrImage} alt="QR Code" />
-
+          <img src={qrImage} alt="QR" />
           <p>
             <b>Session ID:</b> {sessionId}
           </p>
-
           <p>
-            <b>QR Tamat:</b>{" "}
-            {expiresAt ? new Date(expiresAt).toLocaleTimeString() : "-"}
+            <b>Session Tamat:</b>{" "}
+            {expiresAt ? new Date(expiresAt).toLocaleString() : "-"}
           </p>
-
-          <p style={{ fontSize: 12, color: "#555" }}>
-            📌 Pastikan pelajar scan QR ini (session aktif).
-          </p>
-
-          <button onClick={endSession} style={{ marginTop: 10 }}>
-            Tamatkan Session
-          </button>
+          <button onClick={endSession}>Tamatkan Session</button>
         </div>
       )}
 
-      {/* ===== ATTENDANCE TABLE ===== */}
       {sessionId && (
         <div style={{ marginTop: 30 }}>
           <AttendanceList sessionId={sessionId} />
