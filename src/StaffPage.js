@@ -4,11 +4,13 @@ import AttendanceList from "./AttendanceList";
 
 function StaffPage({ staffName, logout }) {
   const [course, setCourse] = useState("");
-  const [qrToken, setQrToken] = useState("");
   const [sessionId, setSessionId] = useState(null);
   const [expiresAt, setExpiresAt] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // ===============================
+  // SAFETY CHECK – STAFF SAHAJA
+  // ===============================
   const isStudentId = /^[A-Z]\d{3,}$/.test(staffName);
   if (!staffName || isStudentId) {
     return (
@@ -19,13 +21,18 @@ function StaffPage({ staffName, logout }) {
     );
   }
 
+  // ===============================
+  // CREATE SESSION
+  // ===============================
   const createSession = async () => {
-    if (!course.trim()) return alert("Sila masukkan Course Code");
+    if (!course.trim()) {
+      alert("Sila masukkan Course Code");
+      return;
+    }
 
     try {
       setLoading(true);
 
-      const token = crypto.randomUUID();
       const expiresAtValue = new Date(Date.now() + 10 * 60 * 1000);
 
       const { data, error } = await supabase
@@ -33,7 +40,6 @@ function StaffPage({ staffName, logout }) {
         .insert([
           {
             course_code: course.trim(),
-            token,
             expires_at: expiresAtValue,
           },
         ])
@@ -43,27 +49,39 @@ function StaffPage({ staffName, logout }) {
       if (error) throw error;
 
       setSessionId(data.id);
-      setQrToken(token);
       setExpiresAt(expiresAtValue);
     } catch (e) {
-      alert(e.message);
+      alert("Gagal cipta session: " + e.message);
     } finally {
       setLoading(false);
     }
   };
 
+  // ===============================
+  // TAMATKAN SESSION (UI SAHAJA)
+  // ===============================
   const endSession = () => {
     setSessionId(null);
-    setQrToken("");
     setExpiresAt(null);
   };
 
+  // ===============================
+  // QR URL (GUNA session_id TERUS)
+  // ===============================
   const APP_URL = "https://smartattend-psi.vercel.app";
-  const qrUrl = qrToken ? `${APP_URL}/attendance?token=${qrToken}` : "";
-  const qrImage = qrToken
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrUrl)}`
+  const qrUrl = sessionId
+    ? `${APP_URL}/attendance?session_id=${sessionId}`
     : "";
 
+  const qrImage = sessionId
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+        qrUrl
+      )}`
+    : "";
+
+  // ===============================
+  // UI
+  // ===============================
   return (
     <div style={{ padding: 30, maxWidth: 900 }}>
       <h2>Welcome, {staffName}</h2>
@@ -72,7 +90,7 @@ function StaffPage({ staffName, logout }) {
         <button onClick={logout}>Logout</button>
 
         <input
-          placeholder="Course Code"
+          placeholder="Course Code (DIT101)"
           value={course}
           onChange={(e) => setCourse(e.target.value)}
         />
@@ -82,11 +100,22 @@ function StaffPage({ staffName, logout }) {
         </button>
       </div>
 
-      {qrToken && (
+      {sessionId && (
         <div style={{ marginTop: 25, border: "1px solid #ccc", padding: 20 }}>
-          <img src={qrImage} alt="QR" />
-          <p><b>Session ID:</b> {sessionId}</p>
-          <p><b>QR Tamat:</b> {new Date(expiresAt).toLocaleTimeString()}</p>
+          <img src={qrImage} alt="QR Code" />
+
+          <p>
+            <b>Session ID:</b> {sessionId}
+          </p>
+
+          <p>
+            <b>QR Tamat:</b>{" "}
+            {expiresAt ? new Date(expiresAt).toLocaleTimeString() : "-"}
+          </p>
+
+          <p style={{ fontSize: 12, color: "#555" }}>
+            📌 Pastikan pelajar scan QR ini (session aktif).
+          </p>
 
           <button onClick={endSession} style={{ marginTop: 10 }}>
             Tamatkan Session
