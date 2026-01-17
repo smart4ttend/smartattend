@@ -8,9 +8,12 @@ function AttendancePage() {
   const [submitted, setSubmitted] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // get token from URL
+  // 🔑 Ambil token dari URL
   const token = new URLSearchParams(window.location.search).get("token");
 
+  // ===============================
+  // 1️⃣ FETCH SESSION BERDASARKAN TOKEN (FIX UTAMA)
+  // ===============================
   useEffect(() => {
     if (!token) {
       setStatus("❌ Token tidak ditemui dalam URL");
@@ -19,97 +22,96 @@ function AttendancePage() {
 
     const fetchSession = async () => {
       setStatus("Memuatkan session...");
+
       const { data, error } = await supabase
         .from("attendance_sessions")
-        .select("*")
+        .select("id, course_code")
         .eq("token", token)
-        .limit(1);
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single(); // ⬅️ PENTING
 
-      if (error) {
-        setStatus("❌ Error: " + error.message);
-        return;
-      }
-      if (!data || data.length === 0) {
-        setStatus("❌ Invalid or expired QR code");
+      if (error || !data) {
+        setStatus("❌ QR tidak sah atau telah tamat");
         return;
       }
 
-      setSession(data[0]);
+      console.log("✅ SESSION DITEMUI:", data);
+      setSession(data);
       setStatus("");
     };
 
     fetchSession();
   }, [token]);
 
+  // ===============================
+  // 2️⃣ SUBMIT KEHADIRAN
+  // ===============================
   const submitAttendance = async () => {
     if (!studentId.trim()) {
       alert("Sila masukkan ID pelajar (contoh: A001)");
       return;
     }
+
     if (!session) {
       alert("Session tidak ditemui.");
       return;
     }
 
-    const idTrim = studentId.trim().toUpperCase();
+    const matric = studentId.trim().toUpperCase();
     setBusy(true);
-    setStatus("Memeriksa rekod kehadiran...");
+    setStatus("Menyimpan kehadiran...");
 
     try {
-      // 1) check existing attendance
+      // 🔍 Semak jika sudah rekod
       const { data: exists, error: checkErr } = await supabase
         .from("attendance_records")
         .select("id")
-        .eq("student_matric", idTrim)
+        .eq("student_matric", matric)
         .eq("session_id", session.id)
         .limit(1);
 
       if (checkErr) {
-        setStatus("❌ Error checking existing attendance: " + checkErr.message);
+        setStatus("❌ Ralat semakan: " + checkErr.message);
         setBusy(false);
         return;
       }
 
       if (exists && exists.length > 0) {
-        setStatus("ℹ️ Anda sudah merekod kehadiran untuk session ini.");
+        setStatus("ℹ️ Anda sudah merekod kehadiran.");
         setSubmitted(true);
         setBusy(false);
         return;
       }
 
-      // 2) insert attendance
+      // ➕ Simpan kehadiran
       const { error } = await supabase
         .from("attendance_records")
         .insert([
           {
-            student_matric: idTrim,
+            student_matric: matric,
             session_id: session.id,
           },
         ]);
 
       if (error) {
-        // possible unique-constraint violation from DB (race)
-        const errmsg = error.message || "";
-        if (errmsg.toLowerCase().includes("unique") || errmsg.toLowerCase().includes("duplicate")) {
-          setStatus("ℹ️ Anda sudah merekod kehadiran untuk session ini.");
-          setSubmitted(true);
-        } else {
-          setStatus("❌ Error menyimpan kehadiran: " + errmsg);
-        }
+        setStatus("❌ Gagal simpan kehadiran: " + error.message);
         setBusy(false);
         return;
       }
 
-      // success
       setSubmitted(true);
-      setStatus("✔️ Attendance Recorded Successfully");
+      setStatus("✔️ Kehadiran berjaya direkod");
       setBusy(false);
     } catch (e) {
-      setStatus("❌ Unexpected error: " + e.message);
+      setStatus("❌ Ralat tidak dijangka: " + e.message);
       setBusy(false);
     }
   };
 
+  // ===============================
+  // 3️⃣ PAPAR STATUS SELEPAS SUBMIT
+  // ===============================
   if (submitted) {
     return (
       <div style={{ padding: 30 }}>
@@ -119,6 +121,9 @@ function AttendancePage() {
     );
   }
 
+  // ===============================
+  // 4️⃣ UI
+  // ===============================
   return (
     <div style={{ padding: 30 }}>
       <h2>Attendance Check-In</h2>
@@ -128,7 +133,7 @@ function AttendancePage() {
       {session && (
         <>
           <p>
-            <b>Course:</b> {session.course_code || "(not set)"}
+            <b>Course:</b> {session.course_code}
           </p>
 
           <input
@@ -142,7 +147,11 @@ function AttendancePage() {
           <br />
           <br />
 
-          <button onClick={submitAttendance} style={{ padding: "8px 16px" }} disabled={busy}>
+          <button
+            onClick={submitAttendance}
+            style={{ padding: "8px 16px" }}
+            disabled={busy}
+          >
             {busy ? "Processing..." : "Submit Attendance"}
           </button>
         </>
