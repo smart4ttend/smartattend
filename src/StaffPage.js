@@ -70,9 +70,11 @@ function StaffPage({ staffName, logout }) {
   // ===============================
   // 4️⃣ QR URL & IMAGE
   // ===============================
-  const qrUrl = qrToken
-    ? `${window.location.origin}/attendance?token=${qrToken}`
-    : "";
+  const APP_URL = "https://smartattend-psi.vercel.app";
+
+const qrUrl = qrToken
+  ? `${APP_URL}/attendance?token=${qrToken}`
+  : "";
 
   const qrImage = qrToken
     ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
