@@ -36,9 +36,10 @@ function AttendancePage() {
           },
         ])
         .select();
-
+      console.log("SESSION_ID DARIPADA QR:", sessionId);
       console.log("INSERT DATA:", data);
       console.log("INSERT ERROR:", error);
+      console.log("INSERT KE SESSION:", sessionId);
 
       if (error) {
         alert("Rekod gagal: " + error.message);
