@@ -1,11 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "./supabase";
 
 function AttendanceList({ sessionId }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchAttendance = async () => {
+  const fetchAttendance = useCallback(async () => {
+    if (!sessionId) return;
+
     const { data, error } = await supabase
       .from("attendance_records")
       .select("*")
@@ -16,17 +18,14 @@ function AttendanceList({ sessionId }) {
       setRecords(data || []);
       setLoading(false);
     }
-  };
+  }, [sessionId]);
 
   useEffect(() => {
-    if (!sessionId) return;
+    fetchAttendance();
 
-    fetchAttendance(); // initial fetch
-
-    const interval = setInterval(fetchAttendance, 3000); // 🔁 auto refresh
-
+    const interval = setInterval(fetchAttendance, 3000);
     return () => clearInterval(interval);
-  }, [sessionId]);
+  }, [fetchAttendance]);
 
   if (loading) return <p>Memuatkan kehadiran...</p>;
 
