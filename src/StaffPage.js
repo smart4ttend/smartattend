@@ -111,7 +111,10 @@ const qrUrl = qrToken
           style={{ padding: 6 }}
         />
 
-        <button onClick={createSession} disabled={loading}>
+        <button
+  onClick={createSession}
+  disabled={loading || sessionId}
+>
           {loading ? "Creating..." : "Create Session"}
         </button>
       </div>
@@ -163,3 +166,4 @@ const qrUrl = qrToken
 }
 
 export default StaffPage;
+
