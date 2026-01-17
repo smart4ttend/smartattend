@@ -5,7 +5,8 @@ function AttendanceList({ sessionId }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
-
+  
+console.log("SESSION_ID DI STAFF:", sessionId);
   useEffect(() => {
     if (!sessionId) {
       setErrorMsg("Session ID tidak sah.");
