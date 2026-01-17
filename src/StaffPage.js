@@ -65,6 +65,16 @@ function StaffPage({ staffName, logout }) {
       alert("Error: " + err.message);
       setLoading(false);
     }
+    <button
+  onClick={() => {
+    setSessionId("");
+    setQrToken("");
+    setExpiresAt(null);
+  }}
+  style={{ marginTop: 10 }}
+>
+  Tamatkan Session
+</button>
   };
 
   // ===============================
@@ -166,4 +176,5 @@ const qrUrl = qrToken
 }
 
 export default StaffPage;
+
 
