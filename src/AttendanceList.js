@@ -4,48 +4,31 @@ import { supabase } from "./supabase";
 function AttendanceList({ sessionId }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState("");
-  
-console.log("SESSION_ID DI STAFF:", sessionId);
-  useEffect(() => {
-    if (!sessionId) {
-      setErrorMsg("Session ID tidak sah.");
-      setLoading(false);
-      return;
-    }
 
-    const fetchAttendance = async () => {
-      setLoading(true);
-      setErrorMsg("");
+  const fetchAttendance = async () => {
+    const { data, error } = await supabase
+      .from("attendance_records")
+      .select("*")
+      .eq("session_id", sessionId)
+      .order("created_at", { ascending: false });
 
-      const { data, error } = await supabase
-        .from("attendance_records")
-        .select("*")
-        .eq("session_id", sessionId)
-
-      console.log("📊 Attendance fetch:", data, error);
-
-      if (error) {
-        setErrorMsg("Gagal memuatkan data kehadiran.");
-        setLoading(false);
-        return;
-      }
-
+    if (!error) {
       setRecords(data || []);
       setLoading(false);
-    };
+    }
+  };
 
-    fetchAttendance();
+  useEffect(() => {
+    if (!sessionId) return;
+
+    fetchAttendance(); // initial fetch
+
+    const interval = setInterval(fetchAttendance, 3000); // 🔁 auto refresh
+
+    return () => clearInterval(interval);
   }, [sessionId]);
 
-  // ================= UI =================
-  if (loading) {
-    return <p>Memuatkan kehadiran...</p>;
-  }
-
-  if (errorMsg) {
-    return <p style={{ color: "red" }}>{errorMsg}</p>;
-  }
+  if (loading) return <p>Memuatkan kehadiran...</p>;
 
   return (
     <div>
@@ -54,11 +37,7 @@ console.log("SESSION_ID DI STAFF:", sessionId);
       {records.length === 0 ? (
         <p>Tiada rekod kehadiran setakat ini.</p>
       ) : (
-        <table
-          border="1"
-          cellPadding="6"
-          style={{ borderCollapse: "collapse", width: "100%" }}
-        >
+        <table border="1" cellPadding="6" width="100%">
           <thead>
             <tr>
               <th>No</th>
@@ -67,9 +46,9 @@ console.log("SESSION_ID DI STAFF:", sessionId);
             </tr>
           </thead>
           <tbody>
-            {records.map((row, index) => (
+            {records.map((row, i) => (
               <tr key={row.id}>
-                <td>{index + 1}</td>
+                <td>{i + 1}</td>
                 <td>{row.student_matric}</td>
                 <td>{new Date(row.created_at).toLocaleString()}</td>
               </tr>
