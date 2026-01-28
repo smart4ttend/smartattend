@@ -1,43 +1,47 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
 function AttendanceList({ sessionId }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ===============================
-  // FETCH ATTENDANCE (GUNA timestamp)
-  // ===============================
-  const fetchAttendance = useCallback(async () => {
+  useEffect(() => {
     if (!sessionId) return;
 
-    const { data, error } = await supabase
-      .from("attendance_records")
-      .select("*")
-      .eq("session_id", sessionId)
-      .order("timestamp", { ascending: false }); // 🔥 GUNA timestamp
+    const fetchAttendance = async () => {
+      setLoading(true);
 
-    console.log("Attendance fetch:", data, error);
+      // ✅ Join attendance_records dengan students
+      const { data, error } = await supabase
+        .from("attendance_records")
+        .select(
+          `
+          id,
+          student_matric,
+          timestamp,
+          status,
+          students:student_matric (
+            student_name
+          )
+        `
+        )
+        .eq("session_id", sessionId)
+        .order("timestamp", { ascending: false });
 
-    if (!error) {
+      if (error) {
+        console.error("❌ Fetch error:", error.message);
+        setLoading(false);
+        return;
+      }
+
       setRecords(data || []);
       setLoading(false);
-    }
+    };
+
+    fetchAttendance();
   }, [sessionId]);
 
-  // ===============================
-  // AUTO REFRESH SETIAP 3 SAAT
-  // ===============================
-  useEffect(() => {
-    fetchAttendance(); // initial fetch
-
-    const interval = setInterval(fetchAttendance, 3000);
-    return () => clearInterval(interval);
-  }, [fetchAttendance]);
-
-  if (loading) {
-    return <p>Memuatkan kehadiran...</p>;
-  }
+  if (loading) return <p>Memuatkan kehadiran...</p>;
 
   return (
     <div>
@@ -46,15 +50,13 @@ function AttendanceList({ sessionId }) {
       {records.length === 0 ? (
         <p>Tiada rekod kehadiran setakat ini.</p>
       ) : (
-        <table
-          border="1"
-          cellPadding="6"
-          style={{ borderCollapse: "collapse", width: "100%" }}
-        >
+        <table border="1" cellPadding="6" style={{ borderCollapse: "collapse" }}>
           <thead>
             <tr>
               <th>No</th>
+              <th>Nama Pelajar</th>
               <th>No Matriks</th>
+              <th>Status</th>
               <th>Masa</th>
             </tr>
           </thead>
@@ -62,7 +64,13 @@ function AttendanceList({ sessionId }) {
             {records.map((row, index) => (
               <tr key={row.id}>
                 <td>{index + 1}</td>
+
+                {/* ✅ Papar nama dari table students */}
+                <td>{row.students?.student_name || "-"}</td>
+
                 <td>{row.student_matric}</td>
+                <td>{row.status || "HADIR"}</td>
+
                 <td>{new Date(row.timestamp).toLocaleString()}</td>
               </tr>
             ))}
