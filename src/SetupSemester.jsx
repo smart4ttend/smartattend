@@ -9,11 +9,11 @@ function SetupSemester({ staffName }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Senarai kelas (anda boleh ubah ikut institusi)
+  // ✅ Senarai kelas (ubah ikut institusi)
   const CLASS_OPTIONS = ["DUP1A", "DUP1B", "DUP1C", "DRT1"];
 
   // ===============================
-  // FETCH COURSE LIST (SEMESTER)
+  // FETCH COURSE LIST
   // ===============================
   const fetchCourses = async () => {
     if (!staffName || !semester) return;
@@ -46,7 +46,7 @@ function SetupSemester({ staffName }) {
       setLoading(true);
 
       // 1) INSERT lecturer_courses
-      const { data: courseRow, error: courseErr } = await supabase
+      const { error: courseErr } = await supabase
         .from("lecturer_courses")
         .insert([
           {
@@ -54,18 +54,14 @@ function SetupSemester({ staffName }) {
             course_code: courseCode.trim().toUpperCase(),
             semester: semester.trim(),
           },
-        ])
-        .select()
-        .single();
+        ]);
 
-      // Jika kursus sudah ada (duplicate)
       if (courseErr) {
-        if (courseErr.code === "23505") {
-          // sudah wujud, kita teruskan add kelas
-        } else {
+        if (courseErr.code !== "23505") {
           alert("Gagal tambah kursus: " + courseErr.message);
           return;
         }
+        // jika duplicate (sudah wujud), kita teruskan simpan kelas
       }
 
       // 2) INSERT course_classes (upsert)
@@ -89,7 +85,7 @@ function SetupSemester({ staffName }) {
       setCourseCode("");
       setSelectedClasses([]);
 
-      // refresh list
+      // refresh
       fetchCourses();
     } finally {
       setLoading(false);
@@ -97,7 +93,7 @@ function SetupSemester({ staffName }) {
   };
 
   // ===============================
-  // DELETE COURSE (SEMESTER)
+  // DELETE COURSE
   // ===============================
   const deleteCourse = async (course) => {
     const confirmDelete = window.confirm(
@@ -107,7 +103,6 @@ function SetupSemester({ staffName }) {
 
     setLoading(true);
 
-    // delete lecturer_courses row
     const { error } = await supabase
       .from("lecturer_courses")
       .delete()
@@ -134,7 +129,7 @@ function SetupSemester({ staffName }) {
         semester).
       </p>
 
-      {/* ===== FORM ===== */}
+      {/* FORM */}
       <div
         style={{
           border: "1px solid #ddd",
@@ -143,7 +138,9 @@ function SetupSemester({ staffName }) {
           maxWidth: 520,
         }}
       >
-        <label><b>Semester</b></label>
+        <label>
+          <b>Semester</b>
+        </label>
         <input
           value={semester}
           onChange={(e) => setSemester(e.target.value)}
@@ -151,7 +148,9 @@ function SetupSemester({ staffName }) {
           style={{ width: "100%", padding: 8, marginBottom: 10 }}
         />
 
-        <label><b>Course Code</b></label>
+        <label>
+          <b>Course Code</b>
+        </label>
         <input
           value={courseCode}
           onChange={(e) => setCourseCode(e.target.value)}
@@ -159,7 +158,9 @@ function SetupSemester({ staffName }) {
           style={{ width: "100%", padding: 8, marginBottom: 10 }}
         />
 
-        <label><b>Pilih Kelas Terlibat</b></label>
+        <label>
+          <b>Pilih Kelas Terlibat</b>
+        </label>
         <div style={{ display: "grid", gap: 6, marginTop: 6 }}>
           {CLASS_OPTIONS.map((cls) => (
             <label key={cls} style={{ display: "flex", gap: 8 }}>
@@ -195,7 +196,7 @@ function SetupSemester({ staffName }) {
         </button>
       </div>
 
-      {/* ===== LIST ===== */}
+      {/* LIST */}
       <div style={{ marginTop: 25 }}>
         <h4>Senarai Kursus Semester Ini</h4>
 
