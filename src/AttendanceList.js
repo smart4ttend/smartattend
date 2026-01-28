@@ -21,7 +21,7 @@ function AttendanceList({ sessionId }) {
           student_matric,
           timestamp,
           status,
-          students (
+          students!fk_attendance_student (
             student_name
           )
         `
@@ -29,10 +29,10 @@ function AttendanceList({ sessionId }) {
         .eq("session_id", sessionId)
         .order("timestamp", { ascending: false });
 
+      console.log("Attendance fetch:", data, error);
+
       if (error) {
-        console.error("❌ Fetch error:", error);
-        setErrMsg("Gagal memuatkan data kehadiran.");
-        setRecords([]);
+        setErrMsg("Gagal memuatkan senarai kehadiran.");
         setLoading(false);
         return;
       }
@@ -68,14 +68,9 @@ function AttendanceList({ sessionId }) {
             {records.map((row, index) => (
               <tr key={row.id}>
                 <td>{index + 1}</td>
-
-                {/* ✅ Nama dari table students */}
                 <td>{row.students?.student_name || "-"}</td>
-
-                {/* ✅ Column sebenar */}
                 <td>{row.student_matric}</td>
-
-                <td>{row.status || "HADIR"}</td>
+                <td>{row.status}</td>
                 <td>{new Date(row.timestamp).toLocaleString()}</td>
               </tr>
             ))}
