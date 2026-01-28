@@ -4,14 +4,15 @@ import { supabase } from "./supabase";
 function AttendanceList({ sessionId }) {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errMsg, setErrMsg] = useState("");
 
   useEffect(() => {
     if (!sessionId) return;
 
     const fetchAttendance = async () => {
       setLoading(true);
+      setErrMsg("");
 
-      // ✅ Join attendance_records dengan students
       const { data, error } = await supabase
         .from("attendance_records")
         .select(
@@ -20,7 +21,7 @@ function AttendanceList({ sessionId }) {
           student_matric,
           timestamp,
           status,
-          students:student_matric (
+          students (
             student_name
           )
         `
@@ -29,7 +30,9 @@ function AttendanceList({ sessionId }) {
         .order("timestamp", { ascending: false });
 
       if (error) {
-        console.error("❌ Fetch error:", error.message);
+        console.error("❌ Fetch error:", error);
+        setErrMsg("Gagal memuatkan data kehadiran.");
+        setRecords([]);
         setLoading(false);
         return;
       }
@@ -42,6 +45,7 @@ function AttendanceList({ sessionId }) {
   }, [sessionId]);
 
   if (loading) return <p>Memuatkan kehadiran...</p>;
+  if (errMsg) return <p style={{ color: "red" }}>{errMsg}</p>;
 
   return (
     <div>
@@ -65,12 +69,13 @@ function AttendanceList({ sessionId }) {
               <tr key={row.id}>
                 <td>{index + 1}</td>
 
-                {/* ✅ Papar nama dari table students */}
+                {/* ✅ Nama dari table students */}
                 <td>{row.students?.student_name || "-"}</td>
 
+                {/* ✅ Column sebenar */}
                 <td>{row.student_matric}</td>
-                <td>{row.status || "HADIR"}</td>
 
+                <td>{row.status || "HADIR"}</td>
                 <td>{new Date(row.timestamp).toLocaleString()}</td>
               </tr>
             ))}
