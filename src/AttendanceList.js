@@ -15,24 +15,22 @@ function AttendanceList({ sessionId }) {
 
       const { data, error } = await supabase
         .from("attendance_records")
-        .select(
-          `
+        .select(`
           id,
           student_matric,
           timestamp,
           status,
-          students!fk_attendance_student (
-            student_name
+          students!attendance_records_student_matric_fkey (
+            name
           )
-        `
-        )
+        `)
         .eq("session_id", sessionId)
         .order("timestamp", { ascending: false });
 
-      console.log("Attendance fetch:", data, error);
-
       if (error) {
-        setErrMsg("Gagal memuatkan senarai kehadiran.");
+        console.error("❌ Fetch error:", error);
+        setErrMsg(error.message);
+        setRecords([]);
         setLoading(false);
         return;
       }
@@ -45,7 +43,7 @@ function AttendanceList({ sessionId }) {
   }, [sessionId]);
 
   if (loading) return <p>Memuatkan kehadiran...</p>;
-  if (errMsg) return <p style={{ color: "red" }}>{errMsg}</p>;
+  if (errMsg) return <p style={{ color: "red" }}>❌ {errMsg}</p>;
 
   return (
     <div>
@@ -68,7 +66,7 @@ function AttendanceList({ sessionId }) {
             {records.map((row, index) => (
               <tr key={row.id}>
                 <td>{index + 1}</td>
-                <td>{row.students?.student_name || "-"}</td>
+                <td>{row.students?.name || "-"}</td>
                 <td>{row.student_matric}</td>
                 <td>{row.status}</td>
                 <td>{new Date(row.timestamp).toLocaleString()}</td>
