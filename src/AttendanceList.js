@@ -4,6 +4,46 @@ import { supabase } from "./supabase";
 function AttendanceList({ sessionId }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const thStyle = {
+  padding: "12px",
+  fontWeight: "600",
+  fontSize: "14px",
+};
+
+const tdStyle = {
+  padding: "12px",
+  fontSize: "14px",
+};
+
+const getStatusStyle = (status) => {
+  const s = String(status).toUpperCase();
+
+  if (s === "HADIR") {
+    return {
+      backgroundColor: "#e6f7ec",
+      color: "#1e7e34",
+      padding: "6px 12px",
+      borderRadius: "20px",
+      fontWeight: "600",
+      fontSize: "13px",
+      display: "inline-block",
+    };
+  }
+
+  if (s === "LAMBAT") {
+    return {
+      backgroundColor: "#fff4e5",
+      color: "#cc7a00",
+      padding: "6px 12px",
+      borderRadius: "20px",
+      fontWeight: "600",
+      fontSize: "13px",
+      display: "inline-block",
+    };
+  }
+
+  return {};
+};
 
   const fetchAttendance = useCallback(async () => {
     if (!sessionId) return;
@@ -67,41 +107,57 @@ function AttendanceList({ sessionId }) {
   if (loading) return <p>Memuatkan kehadiran...</p>;
 
   return (
-    <div>
-      <h3>Senarai Kehadiran</h3>
+  <div style={{ padding: "20px", fontFamily: "Segoe UI, sans-serif" }}>
+    <h3 style={{ marginBottom: "15px" }}>📋 Senarai Kehadiran SmartAttend</h3>
 
-      {rows.length === 0 ? (
-        <p>Tiada rekod kehadiran setakat ini.</p>
-      ) : (
+    {rows.length === 0 ? (
+      <p>Tiada rekod kehadiran setakat ini.</p>
+    ) : (
+      <div
+        style={{
+          background: "#fff",
+          borderRadius: "12px",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+          overflow: "hidden",
+        }}
+      >
         <table
-          border="1"
-          cellPadding="6"
-          style={{ borderCollapse: "collapse", width: "100%" }}
+          style={{
+            borderCollapse: "collapse",
+            width: "100%",
+          }}
         >
           <thead>
-            <tr>
-              <th>No</th>
-              <th>Nama Pelajar</th>
-              <th>No Matriks</th>
-              <th>Status</th>
-              <th>Masa</th>
+            <tr style={{ backgroundColor: "#f4f6f8", textAlign: "left" }}>
+              <th style={thStyle}>No</th>
+              <th style={thStyle}>Nama Pelajar</th>
+              <th style={thStyle}>No Matriks</th>
+              <th style={thStyle}>Status</th>
+              <th style={thStyle}>Masa</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row, index) => (
-              <tr key={row.id}>
-                <td>{index + 1}</td>
-                <td>{row.student_name}</td>
-                <td>{row.student_matric}</td>
-                <td>{row.status}</td>
-                <td>{new Date(row.timestamp).toLocaleString()}</td>
+              <tr key={row.id} style={{ borderBottom: "1px solid #eee" }}>
+                <td style={tdStyle}>{index + 1}</td>
+                <td style={tdStyle}>{row.student_name}</td>
+                <td style={tdStyle}>{row.student_matric}</td>
+
+                {/* STATUS BADGE */}
+                <td style={tdStyle}>
+                  <span style={getStatusStyle(row.status)}>
+                    {row.status}
+                  </span>
+                </td>
+
+                <td style={tdStyle}>
+                  {new Date(row.timestamp).toLocaleString()}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
-      )}
-    </div>
-  );
-}
-
-export default AttendanceList;
+      </div>
+    )}
+  </div>
+)};
