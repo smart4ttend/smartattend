@@ -161,3 +161,6 @@ const getStatusStyle = (status) => {
     )}
   </div>
 )};
+;
+
+export default AttendanceList;
