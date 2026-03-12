@@ -191,28 +191,6 @@ function StaffPage({ staffName, logout }) {
           Logout
         </button>
 
-        <button
-          onClick={() => setActiveTab("setup")}
-          style={{
-            background: activeTab === "setup" ? "#1976d2" : "#e0e0e0",
-            color: activeTab === "setup" ? "#fff" : "#000",
-            padding: "6px 12px",
-          }}
-        >
-          Setup Semester
-        </button>
-
-        <button
-          onClick={() => setActiveTab("session")}
-          style={{
-            background: activeTab === "session" ? "#1976d2" : "#e0e0e0",
-            color: activeTab === "session" ? "#fff" : "#000",
-            padding: "6px 12px",
-          }}
-        >
-          Create Session
-        </button>
-
       </div>
 
       {activeTab === "setup" && (
@@ -319,4 +297,5 @@ function StaffPage({ staffName, logout }) {
 }
 
 export default StaffPage;
+
 
