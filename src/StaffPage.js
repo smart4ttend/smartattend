@@ -3,11 +3,46 @@ import { supabase } from "./supabase";
 import AttendanceList from "./AttendanceList";
 import SetupSemester from "./SetupSemester";
 
+const container = {
+  padding: "30px",
+  background: "#f4f6fb",
+  minHeight: "100vh",
+  fontFamily: "Segoe UI, sans-serif",
+};
+
+const header = {
+  fontSize: "22px",
+  fontWeight: "600",
+  marginBottom: "25px",
+};
+
+const cardGrid = {
+  display: "flex",
+  gap: "20px",
+  marginBottom: "25px",
+};
+
+const statCard = {
+  flex: 1,
+  background: "#fff",
+  padding: "20px",
+  borderRadius: "12px",
+  boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+};
+
+const cardTitle = {
+  fontSize: "13px",
+  color: "#777",
+};
+
+const cardValue = {
+  fontSize: "24px",
+  fontWeight: "600",
+};
+
 function StaffPage({ staffName, logout }) {
-  // ===============================
-  // HOOKS WAJIB DI ATAS
-  // ===============================
-  const [activeTab, setActiveTab] = useState("setup"); // setup | session
+
+  const [activeTab, setActiveTab] = useState("setup");
 
   const [course, setCourse] = useState("");
   const [classStart, setClassStart] = useState("");
@@ -38,8 +73,9 @@ function StaffPage({ staffName, logout }) {
   // CREATE SESSION
   // ===============================
   const createSession = async () => {
+
     if (!course || !classStart || !lateAfter || !classEnd) {
-      alert("Sila lengkapkan Course dan masa kelas (mula, lambat, tamat).");
+      alert("Sila lengkapkan Course dan masa kelas.");
       return;
     }
 
@@ -48,11 +84,12 @@ function StaffPage({ staffName, logout }) {
     const expiresAtValue = new Date(classEnd);
 
     if (!(classStartAt < lateAfterAt && lateAfterAt < expiresAtValue)) {
-      alert("Susunan masa tidak sah. Sila semak semula.");
+      alert("Susunan masa tidak sah.");
       return;
     }
 
     try {
+
       setLoading(true);
       setErrorMsg("");
 
@@ -76,11 +113,17 @@ function StaffPage({ staffName, logout }) {
 
       setSessionId(data.id);
       setExpiresAt(expiresAtValue);
+
     } catch (err) {
-      setErrorMsg("Ralat tidak dijangka semasa create session.");
+
+      setErrorMsg("Ralat tidak dijangka.");
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
   const endSession = () => {
@@ -92,6 +135,7 @@ function StaffPage({ staffName, logout }) {
   // QR
   // ===============================
   const APP_URL = "https://smartattend-psi.vercel.app";
+
   const qrUrl = sessionId
     ? `${APP_URL}/attendance?session_id=${sessionId}`
     : "";
@@ -106,11 +150,35 @@ function StaffPage({ staffName, logout }) {
   // UI
   // ===============================
   return (
-    <div style={{ padding: 30, maxWidth: 1000 }}>
+    <div style={container}>
+
+      <div style={header}>
+        🎓 SmartAttend Lecturer Dashboard
+      </div>
+
+      {/* STAT CARD */}
+      <div style={cardGrid}>
+        <div style={statCard}>
+          <div style={cardTitle}>Total Scan</div>
+          <div style={cardValue}>0</div>
+        </div>
+
+        <div style={statCard}>
+          <div style={cardTitle}>Hadir</div>
+          <div style={cardValue}>0</div>
+        </div>
+
+        <div style={statCard}>
+          <div style={cardTitle}>Lambat</div>
+          <div style={cardValue}>0</div>
+        </div>
+      </div>
+
       <h2>Welcome, {staffName}</h2>
 
       {/* ===== TOP BAR ===== */}
       <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+
         <button
           onClick={logout}
           style={{ background: "#d32f2f", color: "#fff", padding: "6px 12px" }}
@@ -139,18 +207,20 @@ function StaffPage({ staffName, logout }) {
         >
           Create Session
         </button>
+
       </div>
 
-      {/* ===== TAB: SETUP ===== */}
+      {/* ===== TAB SETUP ===== */}
       {activeTab === "setup" && (
         <div>
           <SetupSemester staffName={staffName} />
         </div>
       )}
 
-      {/* ===== TAB: SESSION ===== */}
+      {/* ===== TAB SESSION ===== */}
       {activeTab === "session" && (
         <div>
+
           <h3>Create Attendance Session</h3>
 
           <div
@@ -161,9 +231,8 @@ function StaffPage({ staffName, logout }) {
               maxWidth: 520,
             }}
           >
-            <label>
-              <b>Course Code</b>
-            </label>
+
+            <label><b>Course Code</b></label>
             <input
               value={course}
               onChange={(e) => setCourse(e.target.value)}
@@ -171,9 +240,7 @@ function StaffPage({ staffName, logout }) {
               style={{ width: "100%", padding: 8, marginBottom: 10 }}
             />
 
-            <label>
-              <b>Masa Mula Kelas</b>
-            </label>
+            <label><b>Masa Mula Kelas</b></label>
             <input
               type="datetime-local"
               value={classStart}
@@ -181,9 +248,7 @@ function StaffPage({ staffName, logout }) {
               style={{ width: "100%", padding: 8, marginBottom: 10 }}
             />
 
-            <label>
-              <b>Lambat Selepas</b>
-            </label>
+            <label><b>Lambat Selepas</b></label>
             <input
               type="datetime-local"
               value={lateAfter}
@@ -191,9 +256,7 @@ function StaffPage({ staffName, logout }) {
               style={{ width: "100%", padding: 8, marginBottom: 10 }}
             />
 
-            <label>
-              <b>Masa Tamat Kelas</b>
-            </label>
+            <label><b>Masa Tamat Kelas</b></label>
             <input
               type="datetime-local"
               value={classEnd}
@@ -210,6 +273,7 @@ function StaffPage({ staffName, logout }) {
             </button>
 
             {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
+
           </div>
 
           {/* QR */}
@@ -221,12 +285,12 @@ function StaffPage({ staffName, logout }) {
                 padding: 15,
               }}
             >
+
               <h4>QR Code</h4>
+
               <img src={qrImage} alt="QR Code" />
 
-              <p>
-                <b>Session ID:</b> {sessionId}
-              </p>
+              <p><b>Session ID:</b> {sessionId}</p>
 
               <p>
                 <b>Session Tamat:</b>{" "}
@@ -242,17 +306,20 @@ function StaffPage({ staffName, logout }) {
               </p>
 
               <button onClick={endSession}>Tamatkan Session</button>
+
             </div>
           )}
 
-          {/* Attendance table */}
+          {/* Attendance Table */}
           {sessionId && (
             <div style={{ marginTop: 25 }}>
               <AttendanceList sessionId={sessionId} />
             </div>
           )}
+
         </div>
       )}
+
     </div>
   );
 }
