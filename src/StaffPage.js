@@ -55,9 +55,6 @@ function StaffPage({ staffName, logout }) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  // ===============================
-  // SECURITY CHECK STAFF SAHAJA
-  // ===============================
   const isStudentId = /^[A-Z]\d{3,}$/.test(staffName);
   if (!staffName || isStudentId) {
     return (
@@ -69,9 +66,6 @@ function StaffPage({ staffName, logout }) {
     );
   }
 
-  // ===============================
-  // CREATE SESSION
-  // ===============================
   const createSession = async () => {
 
     if (!course || !classStart || !lateAfter || !classEnd) {
@@ -131,9 +125,6 @@ function StaffPage({ staffName, logout }) {
     setExpiresAt(null);
   };
 
-  // ===============================
-  // QR
-  // ===============================
   const APP_URL = "https://smartattend-psi.vercel.app";
 
   const qrUrl = sessionId
@@ -141,14 +132,9 @@ function StaffPage({ staffName, logout }) {
     : "";
 
   const qrImage = sessionId
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
-        qrUrl
-      )}`
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrUrl)}`
     : "";
 
-  // ===============================
-  // UI
-  // ===============================
   return (
     <div style={container}>
 
@@ -156,27 +142,46 @@ function StaffPage({ staffName, logout }) {
         🎓 SmartAttend Lecturer Dashboard
       </div>
 
-      {/* STAT CARD */}
+      {/* DASHBOARD CARD */}
       <div style={cardGrid}>
-        <div style={statCard}>
-          <div style={cardTitle}>Total Scan</div>
-          <div style={cardValue}>0</div>
+
+        <div
+          style={{ ...statCard, cursor: "pointer" }}
+          onClick={() => setActiveTab("setup")}
+        >
+          <div style={cardTitle}>Profile</div>
+          <div style={cardValue}>Setup Semester</div>
         </div>
 
-        <div style={statCard}>
-          <div style={cardTitle}>Hadir</div>
-          <div style={cardValue}>0</div>
+        <div
+          style={{ ...statCard, cursor: "pointer" }}
+          onClick={() => setActiveTab("session")}
+        >
+          <div style={cardTitle}>Create Session</div>
+          <div style={cardValue}>Generate QR</div>
         </div>
 
-        <div style={statCard}>
-          <div style={cardTitle}>Lambat</div>
-          <div style={cardValue}>0</div>
+        <div
+          style={{ ...statCard, cursor: "pointer" }}
+          onClick={() => {
+            if (!sessionId) {
+              alert("Sila create session dahulu.");
+            } else {
+              window.scrollTo({
+                top: document.body.scrollHeight,
+                behavior: "smooth",
+              });
+            }
+          }}
+        >
+          <div style={cardTitle}>Rekod Kehadiran</div>
+          <div style={cardValue}>Lihat Kehadiran</div>
         </div>
+
       </div>
 
       <h2>Welcome, {staffName}</h2>
 
-      {/* ===== TOP BAR ===== */}
       <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
 
         <button
@@ -210,14 +215,12 @@ function StaffPage({ staffName, logout }) {
 
       </div>
 
-      {/* ===== TAB SETUP ===== */}
       {activeTab === "setup" && (
         <div>
           <SetupSemester staffName={staffName} />
         </div>
       )}
 
-      {/* ===== TAB SESSION ===== */}
       {activeTab === "session" && (
         <div>
 
@@ -276,15 +279,8 @@ function StaffPage({ staffName, logout }) {
 
           </div>
 
-          {/* QR */}
           {sessionId && (
-            <div
-              style={{
-                marginTop: 20,
-                border: "1px solid #ccc",
-                padding: 15,
-              }}
-            >
+            <div style={{ marginTop: 20, border: "1px solid #ccc", padding: 15 }}>
 
               <h4>QR Code</h4>
 
@@ -298,8 +294,7 @@ function StaffPage({ staffName, logout }) {
               </p>
 
               <p>
-                <b>Link:</b>
-                <br />
+                <b>Link:</b><br />
                 <a href={qrUrl} target="_blank" rel="noreferrer">
                   {qrUrl}
                 </a>
@@ -310,7 +305,6 @@ function StaffPage({ staffName, logout }) {
             </div>
           )}
 
-          {/* Attendance Table */}
           {sessionId && (
             <div style={{ marginTop: 25 }}>
               <AttendanceList sessionId={sessionId} />
