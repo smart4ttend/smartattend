@@ -138,10 +138,34 @@ function StaffPage({ staffName, logout }) {
   return (
     <div style={container}>
 
-      <div style={header}>
-        🎓 SmartAttend Lecturer Dashboard
-      </div>
+      <div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "25px",
+  }}
+>
+  <div style={header}>
+    🎓 SmartAttend Lecturer Dashboard
+  </div>
 
+  <button
+    onClick={logout}
+    style={{
+      background: "#d32f2f",
+      color: "#fff",
+      padding: "8px 14px",
+      border: "none",
+      borderRadius: "6px",
+      cursor: "pointer",
+    }}
+  >
+    Logout
+  </button>
+</div>
+
+<h2>Welcome, {staffName}</h2>
       {/* DASHBOARD CARD */}
       <div style={cardGrid}>
 
@@ -180,16 +204,8 @@ function StaffPage({ staffName, logout }) {
 
       </div>
 
-      <h2>Welcome, {staffName}</h2>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-
-        <button
-          onClick={logout}
-          style={{ background: "#d32f2f", color: "#fff", padding: "6px 12px" }}
-        >
-          Logout
-        </button>
 
       </div>
 
@@ -297,5 +313,3 @@ function StaffPage({ staffName, logout }) {
 }
 
 export default StaffPage;
-
-
