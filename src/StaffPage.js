@@ -42,7 +42,7 @@ const cardValue = {
 
 function StaffPage({ staffName, logout }) {
 
-  const [activeTab, setActiveTab] = useState("setup");
+  const [activeTab, setActiveTab] = useState(null);
 
   const [course, setCourse] = useState("");
   const [classStart, setClassStart] = useState("");
@@ -319,3 +319,4 @@ function StaffPage({ staffName, logout }) {
 }
 
 export default StaffPage;
+
