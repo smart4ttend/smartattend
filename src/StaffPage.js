@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { supabase } from "./supabase";
 import AttendanceList from "./AttendanceList";
 import SetupSemester from "./SetupSemester";
@@ -41,49 +41,38 @@ const cardValue = {
 };
 
 // ===============================
-// 🔥 STUDENT LIST (BARU)
+// 🔥 STUDENT LIST (GUNA DATA UPLOAD)
 // ===============================
-function StudentList() {
-  const [students, setStudents] = useState([]);
-
-  const fetchStudents = async () => {
-    const { data, error } = await supabase
-      .from("students")
-      .select("*")
-      .order("name");
-
-    if (!error) setStudents(data);
-  };
-
-  useEffect(() => {
-    fetchStudents();
-  }, []);
-
+function StudentList({ students }) {
   return (
     <div style={{ marginTop: 30 }}>
-      <h3>📚 Senarai Pelajar</h3>
+      <h3>📚 Senarai Pelajar (Upload)</h3>
 
-      <table border="1" cellPadding="6" style={{ width: "100%" }}>
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>Nama</th>
-            <th>No Matriks</th>
-            <th>Kelas</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {students.map((s, i) => (
-            <tr key={s.matric_no}>
-              <td>{i + 1}</td>
-              <td>{s.name}</td>
-              <td>{s.matric_no}</td>
-              <td>{s.class_name || "-"}</td>
+      {students.length === 0 ? (
+        <p>Tiada data upload lagi.</p>
+      ) : (
+        <table border="1" cellPadding="6" style={{ width: "100%" }}>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Nama</th>
+              <th>No Matriks</th>
+              <th>Kelas</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {students.map((s, i) => (
+              <tr key={i}>
+                <td>{i + 1}</td>
+                <td>{s.name}</td>
+                <td>{s.matric_no}</td>
+                <td>{s.class_name || "-"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
 }
@@ -91,6 +80,8 @@ function StudentList() {
 function StaffPage({ staffName, logout }) {
 
   const [activeTab, setActiveTab] = useState(null);
+
+  const [uploadedStudents, setUploadedStudents] = useState([]); // ✅ TAMBAH
 
   const [course, setCourse] = useState("");
   const [classStart, setClassStart] = useState("");
@@ -115,7 +106,7 @@ function StaffPage({ staffName, logout }) {
   }
 
   // ===============================
-  // CSV UPLOAD
+  // CSV UPLOAD (SIMPAN KE STATE)
   // ===============================
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -131,17 +122,18 @@ function StaffPage({ staffName, logout }) {
           return {
             matric_no: matric_no?.trim(),
             name: name?.trim(),
+            class_name: "DUP1A", // optional
           };
         })
         .filter((s) => s.matric_no && s.name);
 
-      const { error } = await supabase.from("students").insert(students);
+      // ✅ simpan ke state (ini yang kita nak)
+      setUploadedStudents(students);
 
-      if (error) {
-        alert("Upload gagal: " + error.message);
-      } else {
-        alert("Namelist berjaya diupload!");
-      }
+      // optional: simpan ke DB
+      await supabase.from("students").insert(students);
+
+      alert("Namelist berjaya diupload!");
     } catch (err) {
       alert("Error membaca file CSV");
     }
@@ -269,7 +261,6 @@ function StaffPage({ staffName, logout }) {
       {activeTab === "setup" && (
         <div>
 
-          {/* UPLOAD CSV */}
           <div style={{
             marginBottom: 20,
             padding: 15,
@@ -284,8 +275,8 @@ function StaffPage({ staffName, logout }) {
 
           <SetupSemester staffName={staffName} />
 
-          {/* 🔥 STUDENT LIST */}
-          <StudentList />
+          {/* 🔥 guna data upload sahaja */}
+          <StudentList students={uploadedStudents} />
 
         </div>
       )}
@@ -293,7 +284,6 @@ function StaffPage({ staffName, logout }) {
       {/* SESSION TAB */}
       {activeTab === "session" && (
         <div>
-
           <h3>Create Attendance Session</h3>
 
           <div style={{
@@ -302,14 +292,8 @@ function StaffPage({ staffName, logout }) {
             borderRadius: 8,
             maxWidth: 520,
           }}>
-
             <label><b>Course Code</b></label>
-            <input
-              value={course}
-              onChange={(e) => setCourse(e.target.value)}
-              placeholder="DTM10333"
-              style={{ width: "100%", padding: 8, marginBottom: 10 }}
-            />
+            <input value={course} onChange={(e) => setCourse(e.target.value)} placeholder="DTM10333" style={{ width: "100%", padding: 8, marginBottom: 10 }} />
 
             <label><b>Masa Mula Kelas</b></label>
             <input type="datetime-local" value={classStart} onChange={(e) => setClassStart(e.target.value)} style={{ width: "100%", padding: 8, marginBottom: 10 }} />
@@ -343,7 +327,6 @@ function StaffPage({ staffName, logout }) {
               <AttendanceList sessionId={sessionId} />
             </div>
           )}
-
         </div>
       )}
 
