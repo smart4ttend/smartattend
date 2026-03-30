@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "./supabase";
 import AttendanceList from "./AttendanceList";
 import SetupSemester from "./SetupSemester";
@@ -40,6 +40,54 @@ const cardValue = {
   fontWeight: "600",
 };
 
+// ===============================
+// 🔥 STUDENT LIST (BARU)
+// ===============================
+function StudentList() {
+  const [students, setStudents] = useState([]);
+
+  const fetchStudents = async () => {
+    const { data, error } = await supabase
+      .from("students")
+      .select("*")
+      .order("name");
+
+    if (!error) setStudents(data);
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  return (
+    <div style={{ marginTop: 30 }}>
+      <h3>📚 Senarai Pelajar</h3>
+
+      <table border="1" cellPadding="6" style={{ width: "100%" }}>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama</th>
+            <th>No Matriks</th>
+            <th>Kelas</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {students.map((s, i) => (
+            <tr key={s.matric_no}>
+              <td>{i + 1}</td>
+              <td>{s.name}</td>
+              <td>{s.matric_no}</td>
+              <td>{s.class_name || "-"}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function StaffPage({ staffName, logout }) {
 
   const [activeTab, setActiveTab] = useState(null);
@@ -67,7 +115,7 @@ function StaffPage({ staffName, logout }) {
   }
 
   // ===============================
-  // CSV UPLOAD (TAMBAH)
+  // CSV UPLOAD
   // ===============================
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -201,40 +249,20 @@ function StaffPage({ staffName, logout }) {
 
       {/* DASHBOARD CARD */}
       <div style={cardGrid}>
-
-        <div
-          style={{ ...statCard, cursor: "pointer" }}
-          onClick={() => setActiveTab("setup")}
-        >
+        <div style={{ ...statCard, cursor: "pointer" }} onClick={() => setActiveTab("setup")}>
           <div style={cardTitle}>Profile</div>
           <div style={cardValue}>Setup Semester</div>
         </div>
 
-        <div
-          style={{ ...statCard, cursor: "pointer" }}
-          onClick={() => setActiveTab("session")}
-        >
+        <div style={{ ...statCard, cursor: "pointer" }} onClick={() => setActiveTab("session")}>
           <div style={cardTitle}>Create Session</div>
           <div style={cardValue}>Generate QR</div>
         </div>
 
-        <div
-          style={{ ...statCard, cursor: "pointer" }}
-          onClick={() => {
-            if (!sessionId) {
-              alert("Sila create session dahulu.");
-            } else {
-              window.scrollTo({
-                top: document.body.scrollHeight,
-                behavior: "smooth",
-              });
-            }
-          }}
-        >
+        <div style={{ ...statCard, cursor: "pointer" }}>
           <div style={cardTitle}>Rekod Kehadiran</div>
           <div style={cardValue}>Lihat Kehadiran</div>
         </div>
-
       </div>
 
       {/* SETUP TAB */}
@@ -255,6 +283,10 @@ function StaffPage({ staffName, logout }) {
           </div>
 
           <SetupSemester staffName={staffName} />
+
+          {/* 🔥 STUDENT LIST */}
+          <StudentList />
+
         </div>
       )}
 
@@ -280,34 +312,15 @@ function StaffPage({ staffName, logout }) {
             />
 
             <label><b>Masa Mula Kelas</b></label>
-            <input
-              type="datetime-local"
-              value={classStart}
-              onChange={(e) => setClassStart(e.target.value)}
-              style={{ width: "100%", padding: 8, marginBottom: 10 }}
-            />
+            <input type="datetime-local" value={classStart} onChange={(e) => setClassStart(e.target.value)} style={{ width: "100%", padding: 8, marginBottom: 10 }} />
 
             <label><b>Lambat Selepas</b></label>
-            <input
-              type="datetime-local"
-              value={lateAfter}
-              onChange={(e) => setLateAfter(e.target.value)}
-              style={{ width: "100%", padding: 8, marginBottom: 10 }}
-            />
+            <input type="datetime-local" value={lateAfter} onChange={(e) => setLateAfter(e.target.value)} style={{ width: "100%", padding: 8, marginBottom: 10 }} />
 
             <label><b>Masa Tamat Kelas</b></label>
-            <input
-              type="datetime-local"
-              value={classEnd}
-              onChange={(e) => setClassEnd(e.target.value)}
-              style={{ width: "100%", padding: 8, marginBottom: 10 }}
-            />
+            <input type="datetime-local" value={classEnd} onChange={(e) => setClassEnd(e.target.value)} style={{ width: "100%", padding: 8, marginBottom: 10 }} />
 
-            <button
-              onClick={createSession}
-              disabled={loading || sessionId}
-              style={{ width: "100%", padding: 10 }}
-            >
+            <button onClick={createSession} disabled={loading || sessionId} style={{ width: "100%", padding: 10 }}>
               {loading ? "Creating..." : "Create Session"}
             </button>
 
@@ -318,21 +331,9 @@ function StaffPage({ staffName, logout }) {
             <div style={{ marginTop: 20, border: "1px solid #ccc", padding: 15 }}>
               <h4>QR Code</h4>
               <img src={qrImage} alt="QR Code" />
-
               <p><b>Session ID:</b> {sessionId}</p>
-
-              <p>
-                <b>Session Tamat:</b>{" "}
-                {expiresAt ? new Date(expiresAt).toLocaleString() : "-"}
-              </p>
-
-              <p>
-                <b>Link:</b><br />
-                <a href={qrUrl} target="_blank" rel="noreferrer">
-                  {qrUrl}
-                </a>
-              </p>
-
+              <p><b>Session Tamat:</b> {expiresAt ? new Date(expiresAt).toLocaleString() : "-"}</p>
+              <p><b>Link:</b><br /><a href={qrUrl} target="_blank" rel="noreferrer">{qrUrl}</a></p>
               <button onClick={endSession}>Tamatkan Session</button>
             </div>
           )}
