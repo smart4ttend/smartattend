@@ -128,6 +128,7 @@ function StaffPage({ staffName, logout }) {
             class_start_at: classStartAt,
             late_after: lateAfterAt,
             expires_at: expiresAtValue,
+            class_name: "DUP1A",
           },
         ])
         .select()
