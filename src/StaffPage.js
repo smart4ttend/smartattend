@@ -41,7 +41,7 @@ const cardValue = {
 };
 
 // ===============================
-// STUDENT LIST (KEKAL)
+// STUDENT LIST
 // ===============================
 function StudentList() {
   const [students, setStudents] = useState([]);
@@ -98,12 +98,11 @@ function StaffPage({ staffName, logout }) {
   const [classEnd, setClassEnd] = useState("");
 
   const [sessionId, setSessionId] = useState(null);
-  const [expiresAt, setExpiresAt] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const [selectedClass, setSelectedClass] = useState(""); // ✅ TAMBAH
+  const [selectedClass, setSelectedClass] = useState("");
 
   const isStudentId = /^[A-Z]\d{3,}$/.test(staffName);
   if (!staffName || isStudentId) {
@@ -117,7 +116,7 @@ function StaffPage({ staffName, logout }) {
   }
 
   // ===============================
-  // CSV UPLOAD (DENGAN CLASS)
+  // CSV UPLOAD
   // ===============================
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -193,7 +192,6 @@ function StaffPage({ staffName, logout }) {
     }
 
     try {
-
       setLoading(true);
       setErrorMsg("");
 
@@ -217,7 +215,6 @@ function StaffPage({ staffName, logout }) {
       }
 
       setSessionId(data.id);
-      setExpiresAt(expiresAtValue);
 
     } catch (err) {
       setErrorMsg("Ralat tidak dijangka.");
@@ -225,21 +222,6 @@ function StaffPage({ staffName, logout }) {
       setLoading(false);
     }
   };
-
-  const endSession = () => {
-    setSessionId(null);
-    setExpiresAt(null);
-  };
-
-  const APP_URL = "https://smartattend-psi.vercel.app";
-
-  const qrUrl = sessionId
-    ? `${APP_URL}/attendance?session_id=${sessionId}`
-    : "";
-
-  const qrImage = sessionId
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(qrUrl)}`
-    : "";
 
   return (
     <div style={container}>
@@ -299,7 +281,6 @@ function StaffPage({ staffName, logout }) {
             <h4>Upload Namelist (CSV)</h4>
             <input type="file" accept=".csv" onChange={handleFileUpload} />
 
-            {/* 🔥 DELETE IKUT CLASS */}
             <div style={{ marginTop: 10 }}>
               <select
                 value={selectedClass}
@@ -312,17 +293,14 @@ function StaffPage({ staffName, logout }) {
                 <option value="DUP1C">DUP1C</option>
               </select>
 
-              <button
-                onClick={deleteByClass}
-                style={{
-                  padding: "6px 12px",
-                  background: "#d32f2f",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                }}
-              >
+              <button onClick={deleteByClass} style={{
+                padding: "6px 12px",
+                background: "#d32f2f",
+                color: "#fff",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+              }}>
                 Delete by Class
               </button>
             </div>
@@ -330,7 +308,6 @@ function StaffPage({ staffName, logout }) {
           </div>
 
           <SetupSemester staffName={staffName} />
-
           <StudentList />
 
         </div>
