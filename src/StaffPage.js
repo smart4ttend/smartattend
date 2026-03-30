@@ -66,6 +66,39 @@ function StaffPage({ staffName, logout }) {
     );
   }
 
+  // ===============================
+  // CSV UPLOAD (TAMBAH)
+  // ===============================
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const rows = text.split("\n").slice(1);
+
+      const students = rows
+        .map((row) => {
+          const [matric_no, name] = row.split(",");
+          return {
+            matric_no: matric_no?.trim(),
+            name: name?.trim(),
+          };
+        })
+        .filter((s) => s.matric_no && s.name);
+
+      const { error } = await supabase.from("students").insert(students);
+
+      if (error) {
+        alert("Upload gagal: " + error.message);
+      } else {
+        alert("Namelist berjaya diupload!");
+      }
+    } catch (err) {
+      alert("Error membaca file CSV");
+    }
+  };
+
   const createSession = async () => {
 
     if (!course || !classStart || !lateAfter || !classEnd) {
@@ -138,34 +171,33 @@ function StaffPage({ staffName, logout }) {
   return (
     <div style={container}>
 
-      <div
-  style={{
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "25px",
-  }}
->
-  <div style={header}>
-    🎓 SmartAttend Lecturer Dashboard
-  </div>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "25px",
+      }}>
+        <div style={header}>
+          🎓 SmartAttend Lecturer Dashboard
+        </div>
 
-  <button
-    onClick={logout}
-    style={{
-      background: "#d32f2f",
-      color: "#fff",
-      padding: "8px 14px",
-      border: "none",
-      borderRadius: "6px",
-      cursor: "pointer",
-    }}
-  >
-    Logout
-  </button>
-</div>
+        <button
+          onClick={logout}
+          style={{
+            background: "#d32f2f",
+            color: "#fff",
+            padding: "8px 14px",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+          }}
+        >
+          Logout
+        </button>
+      </div>
 
-<h2>Welcome, {staffName}</h2>
+      <h2>Welcome, {staffName}</h2>
+
       {/* DASHBOARD CARD */}
       <div style={cardGrid}>
 
@@ -204,30 +236,39 @@ function StaffPage({ staffName, logout }) {
 
       </div>
 
-
-      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-
-      </div>
-
+      {/* SETUP TAB */}
       {activeTab === "setup" && (
         <div>
+
+          {/* UPLOAD CSV */}
+          <div style={{
+            marginBottom: 20,
+            padding: 15,
+            background: "#fff",
+            borderRadius: 10,
+            boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+            maxWidth: 400,
+          }}>
+            <h4>Upload Namelist (CSV)</h4>
+            <input type="file" accept=".csv" onChange={handleFileUpload} />
+          </div>
+
           <SetupSemester staffName={staffName} />
         </div>
       )}
 
+      {/* SESSION TAB */}
       {activeTab === "session" && (
         <div>
 
           <h3>Create Attendance Session</h3>
 
-          <div
-            style={{
-              border: "1px solid #ddd",
-              padding: 15,
-              borderRadius: 8,
-              maxWidth: 520,
-            }}
-          >
+          <div style={{
+            border: "1px solid #ddd",
+            padding: 15,
+            borderRadius: 8,
+            maxWidth: 520,
+          }}>
 
             <label><b>Course Code</b></label>
             <input
@@ -270,14 +311,11 @@ function StaffPage({ staffName, logout }) {
             </button>
 
             {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
-
           </div>
 
           {sessionId && (
             <div style={{ marginTop: 20, border: "1px solid #ccc", padding: 15 }}>
-
               <h4>QR Code</h4>
-
               <img src={qrImage} alt="QR Code" />
 
               <p><b>Session ID:</b> {sessionId}</p>
@@ -295,7 +333,6 @@ function StaffPage({ staffName, logout }) {
               </p>
 
               <button onClick={endSession}>Tamatkan Session</button>
-
             </div>
           )}
 
