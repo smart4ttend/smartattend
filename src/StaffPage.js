@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "./supabase";
 import AttendanceList from "./AttendanceList";
 import SetupSemester from "./SetupSemester";
@@ -41,38 +41,49 @@ const cardValue = {
 };
 
 // ===============================
-// 🔥 STUDENT LIST (GUNA DATA UPLOAD)
+// STUDENT LIST (KEKAL)
 // ===============================
-function StudentList({ students }) {
+function StudentList() {
+  const [students, setStudents] = useState([]);
+
+  const fetchStudents = async () => {
+    const { data, error } = await supabase
+      .from("students")
+      .select("*")
+      .order("name");
+
+    if (!error) setStudents(data);
+  };
+
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
   return (
     <div style={{ marginTop: 30 }}>
-      <h3>📚 Senarai Pelajar (Upload)</h3>
+      <h3>📚 Senarai Pelajar</h3>
 
-      {students.length === 0 ? (
-        <p>Tiada data upload lagi.</p>
-      ) : (
-        <table border="1" cellPadding="6" style={{ width: "100%" }}>
-          <thead>
-            <tr>
-              <th>No</th>
-              <th>Nama</th>
-              <th>No Matriks</th>
-              <th>Kelas</th>
+      <table border="1" cellPadding="6" style={{ width: "100%" }}>
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Nama</th>
+            <th>No Matriks</th>
+            <th>Kelas</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {students.map((s, i) => (
+            <tr key={s.matric_no}>
+              <td>{i + 1}</td>
+              <td>{s.name}</td>
+              <td>{s.matric_no}</td>
+              <td>{s.class_name || "-"}</td>
             </tr>
-          </thead>
-
-          <tbody>
-            {students.map((s, i) => (
-              <tr key={i}>
-                <td>{i + 1}</td>
-                <td>{s.name}</td>
-                <td>{s.matric_no}</td>
-                <td>{s.class_name || "-"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -80,8 +91,6 @@ function StudentList({ students }) {
 function StaffPage({ staffName, logout }) {
 
   const [activeTab, setActiveTab] = useState(null);
-
-  const [uploadedStudents, setUploadedStudents] = useState([]); // ✅ TAMBAH
 
   const [course, setCourse] = useState("");
   const [classStart, setClassStart] = useState("");
@@ -93,6 +102,8 @@ function StaffPage({ staffName, logout }) {
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  const [selectedClass, setSelectedClass] = useState(""); // ✅ TAMBAH
 
   const isStudentId = /^[A-Z]\d{3,}$/.test(staffName);
   if (!staffName || isStudentId) {
@@ -106,7 +117,7 @@ function StaffPage({ staffName, logout }) {
   }
 
   // ===============================
-  // CSV UPLOAD (SIMPAN KE STATE)
+  // CSV UPLOAD (DENGAN CLASS)
   // ===============================
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -118,24 +129,50 @@ function StaffPage({ staffName, logout }) {
 
       const students = rows
         .map((row) => {
-          const [matric_no, name] = row.split(",");
+          const [matric_no, name, class_name] = row.split(",");
           return {
             matric_no: matric_no?.trim(),
             name: name?.trim(),
-            class_name: "DUP1A", // optional
+            class_name: class_name?.trim(),
           };
         })
         .filter((s) => s.matric_no && s.name);
 
-      // ✅ simpan ke state (ini yang kita nak)
-      setUploadedStudents(students);
+      const { error } = await supabase.from("students").insert(students);
 
-      // optional: simpan ke DB
-      await supabase.from("students").insert(students);
-
-      alert("Namelist berjaya diupload!");
+      if (error) {
+        alert("Upload gagal: " + error.message);
+      } else {
+        alert("Namelist berjaya diupload!");
+      }
     } catch (err) {
       alert("Error membaca file CSV");
+    }
+  };
+
+  // ===============================
+  // DELETE IKUT CLASS
+  // ===============================
+  const deleteByClass = async () => {
+    if (!selectedClass) {
+      alert("Sila pilih kelas dahulu");
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `Padam semua pelajar kelas ${selectedClass}?`
+    );
+    if (!confirmDelete) return;
+
+    const { error } = await supabase
+      .from("students")
+      .delete()
+      .eq("class_name", selectedClass);
+
+    if (error) {
+      alert("Gagal padam: " + error.message);
+    } else {
+      alert("Pelajar berjaya dipadam!");
     }
   };
 
@@ -183,15 +220,10 @@ function StaffPage({ staffName, logout }) {
       setExpiresAt(expiresAtValue);
 
     } catch (err) {
-
       setErrorMsg("Ralat tidak dijangka.");
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
   const endSession = () => {
@@ -222,24 +254,20 @@ function StaffPage({ staffName, logout }) {
           🎓 SmartAttend Lecturer Dashboard
         </div>
 
-        <button
-          onClick={logout}
-          style={{
-            background: "#d32f2f",
-            color: "#fff",
-            padding: "8px 14px",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-          }}
-        >
+        <button onClick={logout} style={{
+          background: "#d32f2f",
+          color: "#fff",
+          padding: "8px 14px",
+          border: "none",
+          borderRadius: "6px",
+          cursor: "pointer",
+        }}>
           Logout
         </button>
       </div>
 
       <h2>Welcome, {staffName}</h2>
 
-      {/* DASHBOARD CARD */}
       <div style={cardGrid}>
         <div style={{ ...statCard, cursor: "pointer" }} onClick={() => setActiveTab("setup")}>
           <div style={cardTitle}>Profile</div>
@@ -251,13 +279,12 @@ function StaffPage({ staffName, logout }) {
           <div style={cardValue}>Generate QR</div>
         </div>
 
-        <div style={{ ...statCard, cursor: "pointer" }}>
+        <div style={{ ...statCard }}>
           <div style={cardTitle}>Rekod Kehadiran</div>
           <div style={cardValue}>Lihat Kehadiran</div>
         </div>
       </div>
 
-      {/* SETUP TAB */}
       {activeTab === "setup" && (
         <div>
 
@@ -271,19 +298,47 @@ function StaffPage({ staffName, logout }) {
           }}>
             <h4>Upload Namelist (CSV)</h4>
             <input type="file" accept=".csv" onChange={handleFileUpload} />
+
+            {/* 🔥 DELETE IKUT CLASS */}
+            <div style={{ marginTop: 10 }}>
+              <select
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                style={{ padding: 6, marginRight: 10 }}
+              >
+                <option value="">-- Pilih Kelas --</option>
+                <option value="DUP1A">DUP1A</option>
+                <option value="DUP1B">DUP1B</option>
+                <option value="DUP1C">DUP1C</option>
+              </select>
+
+              <button
+                onClick={deleteByClass}
+                style={{
+                  padding: "6px 12px",
+                  background: "#d32f2f",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                }}
+              >
+                Delete by Class
+              </button>
+            </div>
+
           </div>
 
           <SetupSemester staffName={staffName} />
 
-          {/* 🔥 guna data upload sahaja */}
-          <StudentList students={uploadedStudents} />
+          <StudentList />
 
         </div>
       )}
 
-      {/* SESSION TAB */}
       {activeTab === "session" && (
         <div>
+
           <h3>Create Attendance Session</h3>
 
           <div style={{
@@ -292,41 +347,28 @@ function StaffPage({ staffName, logout }) {
             borderRadius: 8,
             maxWidth: 520,
           }}>
+
             <label><b>Course Code</b></label>
-            <input value={course} onChange={(e) => setCourse(e.target.value)} placeholder="DTM10333" style={{ width: "100%", padding: 8, marginBottom: 10 }} />
+            <input value={course} onChange={(e) => setCourse(e.target.value)} style={{ width: "100%", padding: 8 }} />
 
-            <label><b>Masa Mula Kelas</b></label>
-            <input type="datetime-local" value={classStart} onChange={(e) => setClassStart(e.target.value)} style={{ width: "100%", padding: 8, marginBottom: 10 }} />
+            <label><b>Masa Mula</b></label>
+            <input type="datetime-local" value={classStart} onChange={(e) => setClassStart(e.target.value)} />
 
-            <label><b>Lambat Selepas</b></label>
-            <input type="datetime-local" value={lateAfter} onChange={(e) => setLateAfter(e.target.value)} style={{ width: "100%", padding: 8, marginBottom: 10 }} />
+            <label><b>Lambat</b></label>
+            <input type="datetime-local" value={lateAfter} onChange={(e) => setLateAfter(e.target.value)} />
 
-            <label><b>Masa Tamat Kelas</b></label>
-            <input type="datetime-local" value={classEnd} onChange={(e) => setClassEnd(e.target.value)} style={{ width: "100%", padding: 8, marginBottom: 10 }} />
+            <label><b>Tamat</b></label>
+            <input type="datetime-local" value={classEnd} onChange={(e) => setClassEnd(e.target.value)} />
 
-            <button onClick={createSession} disabled={loading || sessionId} style={{ width: "100%", padding: 10 }}>
+            <button onClick={createSession}>
               {loading ? "Creating..." : "Create Session"}
             </button>
 
             {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
           </div>
 
-          {sessionId && (
-            <div style={{ marginTop: 20, border: "1px solid #ccc", padding: 15 }}>
-              <h4>QR Code</h4>
-              <img src={qrImage} alt="QR Code" />
-              <p><b>Session ID:</b> {sessionId}</p>
-              <p><b>Session Tamat:</b> {expiresAt ? new Date(expiresAt).toLocaleString() : "-"}</p>
-              <p><b>Link:</b><br /><a href={qrUrl} target="_blank" rel="noreferrer">{qrUrl}</a></p>
-              <button onClick={endSession}>Tamatkan Session</button>
-            </div>
-          )}
+          {sessionId && <AttendanceList sessionId={sessionId} />}
 
-          {sessionId && (
-            <div style={{ marginTop: 25 }}>
-              <AttendanceList sessionId={sessionId} />
-            </div>
-          )}
         </div>
       )}
 
