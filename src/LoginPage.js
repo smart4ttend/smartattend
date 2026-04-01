@@ -2,13 +2,12 @@ import React, { useState } from "react";
 import { supabase } from "./supabase";
 
 function LoginPage({ onLogin }) {
-  const [userType, setUserType] = useState("student");
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!userId.trim()) {
-      alert("Sila masukkan ID");
+      alert("Sila masukkan ID pensyarah");
       return;
     }
 
@@ -16,80 +15,53 @@ function LoginPage({ onLogin }) {
     setLoading(true);
 
     // =====================
-    // LOGIN STAFF
+    // LOGIN STAFF SAHAJA
     // =====================
-    if (userType === "staff") {
-      const { data, error } = await supabase
-        .from("staff")
-        .select("name")
-        .eq("staff_no", idTrim)
-        .limit(1);
+    const { data, error } = await supabase
+      .from("staff")
+      .select("name")
+      .eq("staff_no", idTrim)
+      .limit(1);
 
-      setLoading(false);
+    setLoading(false);
 
-      if (error) {
-        alert("Error sistem: " + error.message);
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        alert("❌ ID staff tidak sah");
-        return;
-      }
-
-      // ✅ staff sah
-      onLogin("staff", data[0].name);
+    if (error) {
+      alert("Error sistem: " + error.message);
       return;
     }
 
-    // =====================
-    // LOGIN STUDENT
-    // =====================
-    if (userType === "student") {
-      setLoading(false);
-      onLogin("student", idTrim);
+    if (!data || data.length === 0) {
+      alert("❌ ID pensyarah tidak sah");
+      return;
     }
+
+    // ✅ LOGIN BERJAYA
+    onLogin("staff", data[0].name);
   };
 
   return (
     <div style={{ padding: 30, maxWidth: 400 }}>
       <h2>SmartAttend Login</h2>
 
-      <div style={{ marginBottom: 10 }}>
-        <label>
-          <input
-            type="radio"
-            value="student"
-            checked={userType === "student"}
-            onChange={() => setUserType("student")}
-          />{" "}
-          Student
-        </label>
-
-        <label style={{ marginLeft: 20 }}>
-          <input
-            type="radio"
-            value="staff"
-            checked={userType === "staff"}
-            onChange={() => setUserType("staff")}
-          />{" "}
-          Staff
-        </label>
-      </div>
+      <p style={{ marginBottom: "10px", fontWeight: "500" }}>
+        Login Pensyarah
+      </p>
 
       <input
-        style={{ padding: 8, width: "100%" }}
-        placeholder="ID (contoh: A001 / L001)"
+        type="text"
+        placeholder="Masukkan ID Pensyarah (contoh: PTS.50010/1/43)"
         value={userId}
         onChange={(e) => setUserId(e.target.value)}
+        style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
       />
-
-      <br /><br />
 
       <button
         onClick={handleLogin}
         disabled={loading}
-        style={{ padding: "8px 16px" }}
+        style={{
+          padding: "8px 16px",
+          width: "100%",
+        }}
       >
         {loading ? "Checking..." : "Login"}
       </button>
