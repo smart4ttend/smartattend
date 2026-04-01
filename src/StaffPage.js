@@ -267,6 +267,7 @@ function StaffPage({ staffName, logout }) {
         </div>
       </div>
 
+      {/* SETUP TAB */}
       {activeTab === "setup" && (
         <div>
 
@@ -280,31 +281,6 @@ function StaffPage({ staffName, logout }) {
           }}>
             <h4>Upload Namelist (CSV)</h4>
             <input type="file" accept=".csv" onChange={handleFileUpload} />
-
-            <div style={{ marginTop: 10 }}>
-              <select
-                value={selectedClass}
-                onChange={(e) => setSelectedClass(e.target.value)}
-                style={{ padding: 6, marginRight: 10 }}
-              >
-                <option value="">-- Pilih Kelas --</option>
-                <option value="DUP1A">DUP1A</option>
-                <option value="DUP1B">DUP1B</option>
-                <option value="DUP1C">DUP1C</option>
-              </select>
-
-              <button onClick={deleteByClass} style={{
-                padding: "6px 12px",
-                background: "#d32f2f",
-                color: "#fff",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-              }}>
-                Delete by Class
-              </button>
-            </div>
-
           </div>
 
           <SetupSemester staffName={staffName} />
@@ -313,6 +289,7 @@ function StaffPage({ staffName, logout }) {
         </div>
       )}
 
+      {/* SESSION TAB */}
       {activeTab === "session" && (
         <div>
 
@@ -344,7 +321,37 @@ function StaffPage({ staffName, logout }) {
             {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
           </div>
 
-          {sessionId && <AttendanceList sessionId={sessionId} />}
+          {/* 🔥 DELETE DIPINDAH KE SINI */}
+          {sessionId && (
+            <div style={{ marginTop: 20 }}>
+
+              <div style={{ marginBottom: 15 }}>
+                <select
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  style={{ padding: 6, marginRight: 10 }}
+                >
+                  <option value="">-- Pilih Kelas --</option>
+                  <option value="DUP1A">DUP1A</option>
+                  <option value="DUP1B">DUP1B</option>
+                  <option value="DUP1C">DUP1C</option>
+                </select>
+
+                <button onClick={deleteByClass} style={{
+                  padding: "6px 12px",
+                  background: "#d32f2f",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                }}>
+                  Delete by Class
+                </button>
+              </div>
+
+              <AttendanceList sessionId={sessionId} />
+            </div>
+          )}
 
         </div>
       )}
