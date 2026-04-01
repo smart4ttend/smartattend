@@ -181,12 +181,12 @@ function StaffPage({ staffName, logout }) {
           <h1>Setup Semester</h1>
 
           <SetupSemester
-            staffName={staffName}
-            onSelectCourse={(course) => {
-              setSelectedCourse(course);
-              setPage("upload");
-            }}
-          />
+  staffName={staffName}
+  onSelectCourse={(course) => {
+    setSelectedCourse(course); // ✅ GUNA INI
+    setPage("upload");
+  }}
+/>
         </div>
       )}
 
