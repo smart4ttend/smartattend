@@ -1,4 +1,4 @@
-import React, { useState, } from "react";
+import React, { useState } from "react";
 import { supabase } from "./supabase";
 import AttendanceList from "./AttendanceList";
 import SetupSemester from "./SetupSemester";
@@ -41,7 +41,6 @@ const cardValue = {
 };
 
 function StaffPage({ staffName, logout }) {
-
   const [page, setPage] = useState("dashboard");
 
   const [course, setCourse] = useState("");
@@ -56,6 +55,7 @@ function StaffPage({ staffName, logout }) {
 
   const [selectedClass, setSelectedClass] = useState("");
 
+  // ❌ block student access
   const isStudentId = /^[A-Z]\d{3,}$/.test(staffName);
   if (!staffName || isStudentId) {
     return (
@@ -68,45 +68,11 @@ function StaffPage({ staffName, logout }) {
   }
 
   // ===============================
-  // CSV UPLOAD
-  // ===============================
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const rows = text.split("\n").slice(1);
-
-      const students = rows
-        .map((row) => {
-          const [matric_no, name, class_name] = row.split(",");
-          return {
-            matric_no: matric_no?.trim(),
-            name: name?.trim(),
-            class_name: class_name?.trim(),
-          };
-        })
-        .filter((s) => s.matric_no && s.name);
-
-      const { error } = await supabase.from("students").insert(students);
-
-      if (error) {
-        alert("Upload failed: " + error.message);
-      } else {
-        alert("Namelist uploaded successfully!");
-      }
-    } catch (err) {
-      alert("Error reading CSV file");
-    }
-  };
-
-  // ===============================
   // DELETE BY CLASS
   // ===============================
   const deleteByClass = async () => {
     if (!selectedClass) {
-      alert("Please select a class");
+      alert("Please enter class name");
       return;
     }
 
@@ -131,7 +97,6 @@ function StaffPage({ staffName, logout }) {
   // CREATE SESSION
   // ===============================
   const createSession = async () => {
-
     if (!course || !classStart || !lateAfter || !classEnd) {
       alert("Please fill in all fields.");
       return;
@@ -170,7 +135,6 @@ function StaffPage({ staffName, logout }) {
       }
 
       setSessionId(data.id);
-
     } catch (err) {
       setErrorMsg("Unexpected error.");
     } finally {
@@ -180,28 +144,32 @@ function StaffPage({ staffName, logout }) {
 
   return (
     <div style={container}>
-
       {/* DASHBOARD HEADER */}
       {page === "dashboard" && (
         <>
-          <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "25px",
-          }}>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "25px",
+            }}
+          >
             <div style={header}>
               🎓 SmartAttend Lecturer Dashboard
             </div>
 
-            <button onClick={logout} style={{
-              background: "#d32f2f",
-              color: "#fff",
-              padding: "8px 14px",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}>
+            <button
+              onClick={logout}
+              style={{
+                background: "#d32f2f",
+                color: "#fff",
+                padding: "8px 14px",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+              }}
+            >
               Logout
             </button>
           </div>
@@ -213,29 +181,35 @@ function StaffPage({ staffName, logout }) {
       {/* DASHBOARD */}
       {page === "dashboard" && (
         <div style={cardGrid}>
-
-          <div style={{ ...statCard, cursor: "pointer" }} onClick={() => setPage("setup")}>
+          <div
+            style={{ ...statCard, cursor: "pointer" }}
+            onClick={() => setPage("setup")}
+          >
             <div style={cardTitle}>Profile</div>
             <div style={cardValue}>Setup Semester</div>
           </div>
 
-          <div style={{ ...statCard, cursor: "pointer" }} onClick={() => setPage("session")}>
+          <div
+            style={{ ...statCard, cursor: "pointer" }}
+            onClick={() => setPage("session")}
+          >
             <div style={cardTitle}>Create Session</div>
             <div style={cardValue}>Generate QR</div>
           </div>
 
-          <div style={{ ...statCard, cursor: "pointer" }} onClick={() => setPage("attendance")}>
+          <div
+            style={{ ...statCard, cursor: "pointer" }}
+            onClick={() => setPage("attendance")}
+          >
             <div style={cardTitle}>Attendance Record</div>
             <div style={cardValue}>View Records</div>
           </div>
-
         </div>
       )}
 
       {/* SETUP PAGE */}
       {page === "setup" && (
         <div>
-
           <button onClick={() => setPage("dashboard")}>
             ← Halaman Utama
           </button>
@@ -243,29 +217,39 @@ function StaffPage({ staffName, logout }) {
           <h1>Setup Semester</h1>
 
           <SetupSemester staffName={staffName} />
-
-          <div style={{ marginTop: 30 }}>
-            <h3>Upload Student List (CSV)</h3>
-            <input type="file" accept=".csv" onChange={handleFileUpload} />
-          </div>
-
         </div>
       )}
 
       {/* SESSION PAGE */}
       {page === "session" && (
         <div>
-
-          <button onClick={() => setPage("dashboard")}>
-            ← Back
-          </button>
+          <button onClick={() => setPage("dashboard")}>← Back</button>
 
           <h3>Create Attendance Session</h3>
 
-          <input placeholder="Course Code" value={course} onChange={(e) => setCourse(e.target.value)} />
-          <input type="datetime-local" value={classStart} onChange={(e) => setClassStart(e.target.value)} />
-          <input type="datetime-local" value={lateAfter} onChange={(e) => setLateAfter(e.target.value)} />
-          <input type="datetime-local" value={classEnd} onChange={(e) => setClassEnd(e.target.value)} />
+          <input
+            placeholder="Course Code"
+            value={course}
+            onChange={(e) => setCourse(e.target.value)}
+          />
+
+          <input
+            type="datetime-local"
+            value={classStart}
+            onChange={(e) => setClassStart(e.target.value)}
+          />
+
+          <input
+            type="datetime-local"
+            value={lateAfter}
+            onChange={(e) => setLateAfter(e.target.value)}
+          />
+
+          <input
+            type="datetime-local"
+            value={classEnd}
+            onChange={(e) => setClassEnd(e.target.value)}
+          />
 
           <button onClick={createSession}>
             {loading ? "Creating..." : "Create Session"}
@@ -274,29 +258,24 @@ function StaffPage({ staffName, logout }) {
           {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
 
           {sessionId && <AttendanceList sessionId={sessionId} />}
-
         </div>
       )}
 
       {/* ATTENDANCE PAGE */}
       {page === "attendance" && (
         <div>
-
-          <button onClick={() => setPage("dashboard")}>
-            ← Back
-          </button>
+          <button onClick={() => setPage("dashboard")}>← Back</button>
 
           <h3>Attendance Record</h3>
 
-          <select
+          {/* 🔥 INPUT TYPE (replace dropdown) */}
+          <input
+            placeholder="Enter Class (e.g. DUP1A)"
             value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-          >
-            <option value="">-- Select Class --</option>
-            <option value="DUP1A">DUP1A</option>
-            <option value="DUP1B">DUP1B</option>
-            <option value="DUP1C">DUP1C</option>
-          </select>
+            onChange={(e) =>
+              setSelectedClass(e.target.value.toUpperCase())
+            }
+          />
 
           <button onClick={deleteByClass}>
             Delete by Class
@@ -307,10 +286,8 @@ function StaffPage({ staffName, logout }) {
           ) : (
             <p>No active session.</p>
           )}
-
         </div>
       )}
-
     </div>
   );
 }
