@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
-function SetupSemester({ staffName, onSelectCourse }) {
+function SetupSemester({ staffName }) {
   const [semester, setSemester] = useState("2025/2026");
   const [courseCode, setCourseCode] = useState("");
   const [selectedClasses, setSelectedClasses] = useState("");
@@ -9,25 +9,28 @@ function SetupSemester({ staffName, onSelectCourse }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const [activeCourse, setActiveCourse] = useState(null); // ✅ NEW
+
   // ===============================
   // FETCH COURSE LIST
   // ===============================
-const fetchCourses = useCallback(async () => {
-  if (!staffName || !semester) return;
+  const fetchCourses = async () => {
+    if (!staffName || !semester) return;
 
-  const { data, error } = await supabase
-    .from("lecturer_courses")
-    .select("*")
-    .eq("lecturer_name", staffName)
-    .eq("semester", semester)
-    .order("course_code", { ascending: true });
+    const { data, error } = await supabase
+      .from("lecturer_courses")
+      .select("*")
+      .eq("lecturer_name", staffName)
+      .eq("semester", semester)
+      .order("course_code", { ascending: true });
 
-  if (!error) setCourses(data || []);
-}, [staffName, semester]);
+    if (!error) setCourses(data || []);
+  };
 
-useEffect(() => {
-  fetchCourses();
-}, [fetchCourses]);
+  useEffect(() => {
+    fetchCourses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [semester, staffName]);
 
   // ===============================
   // ADD COURSE + CLASSES
@@ -51,9 +54,11 @@ useEffect(() => {
           },
         ]);
 
-      if (courseErr && courseErr.code !== "23505") {
-        alert("Failed to add course: " + courseErr.message);
-        return;
+      if (courseErr) {
+        if (courseErr.code !== "23505") {
+          alert("Failed to add course: " + courseErr.message);
+          return;
+        }
       }
 
       const classArray = selectedClasses
@@ -89,6 +94,46 @@ useEffect(() => {
   };
 
   // ===============================
+  // CSV UPLOAD (LINK TO COURSE)
+  // ===============================
+  const handleFileUpload = async (e) => {
+    if (!activeCourse) {
+      alert("Please select a course first");
+      return;
+    }
+
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const rows = text.split("\n").slice(1);
+
+      const students = rows
+        .map((row) => {
+          const [matric_no, name, class_name] = row.split(",");
+          return {
+            matric_no: matric_no?.trim(),
+            name: name?.trim(),
+            class_name: class_name?.trim(),
+            course_code: activeCourse, // 🔥 IMPORTANT
+          };
+        })
+        .filter((s) => s.matric_no && s.name);
+
+      const { error } = await supabase.from("students").insert(students);
+
+      if (error) {
+        alert("Upload failed: " + error.message);
+      } else {
+        alert(`Students uploaded for ${activeCourse}`);
+      }
+    } catch (err) {
+      alert("Error reading CSV file");
+    }
+  };
+
+  // ===============================
   // UI
   // ===============================
   return (
@@ -96,7 +141,7 @@ useEffect(() => {
       <h3>Semester Course Setup</h3>
 
       <p style={{ color: "#555" }}>
-        Click a course to upload student list.
+        Lecturer registers courses and uploads student list per course.
       </p>
 
       {/* FORM */}
@@ -152,9 +197,9 @@ useEffect(() => {
         </button>
       </div>
 
-      {/* LIST */}
+      {/* COURSE LIST */}
       <div style={{ marginTop: 25 }}>
-        <h4>Course List</h4>
+        <h4>Course List for This Semester</h4>
 
         {courses.length === 0 ? (
           <p style={{ color: "#777" }}>No courses registered yet.</p>
@@ -172,32 +217,56 @@ useEffect(() => {
               <tr>
                 <th>Course</th>
                 <th>Semester</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {courses.map((c) => (
-                <tr
-                  key={c.id}
-                  onClick={() => onSelectCourse(c)} // 🔥 CLICK HERE
-                  style={{
-                    cursor: "pointer",
-                    transition: "0.2s",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = "#f1f5ff")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = "white")
-                  }
-                >
+                <tr key={c.id}>
                   <td>{c.course_code}</td>
                   <td>{c.semester}</td>
+                  <td>
+                    <button
+                      onClick={() => setActiveCourse(c.course_code)}
+                      style={{
+                        padding: "6px 12px",
+                        background: "#4f8cff",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Upload Student List
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
+
+      {/* UPLOAD SECTION */}
+      {activeCourse && (
+        <div
+          style={{
+            marginTop: 20,
+            padding: 15,
+            background: "#fff",
+            borderRadius: 10,
+            boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+            maxWidth: 400,
+          }}
+        >
+          <h4>Upload Student List (CSV)</h4>
+          <p style={{ fontSize: 13 }}>
+            Course: <b>{activeCourse}</b>
+          </p>
+
+          <input type="file" accept=".csv" onChange={handleFileUpload} />
+        </div>
+      )}
     </div>
   );
 }
