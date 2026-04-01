@@ -2,10 +2,13 @@ import React, { useState, useEffect } from "react";
 import LoginPage from "./LoginPage";
 import StaffPage from "./StaffPage";
 import AttendancePage from "./AttendancePage";
+import RegisterPage from "./RegisterPage"; // ✅ TAMBAH
 
 function App() {
   const [userType, setUserType] = useState(null);
   const [userId, setUserId] = useState(null);
+
+  const [page, setPage] = useState("login"); // ✅ TAMBAH
 
   // ===============================
   // 1️⃣ CHECK URL DULU (PENTING)
@@ -14,7 +17,7 @@ function App() {
     window.location.pathname === "/attendance";
 
   useEffect(() => {
-    if (isAttendancePage) return; // ⛔ skip login check
+    if (isAttendancePage) return;
 
     const savedType = localStorage.getItem("userType");
     const savedId = localStorage.getItem("userId");
@@ -39,7 +42,7 @@ function App() {
     setUserType(null);
     setUserId(null);
     localStorage.clear();
-    window.location.href = "/"; // reset
+    window.location.href = "/";
   };
 
   // ===============================
@@ -51,13 +54,27 @@ function App() {
     return <AttendancePage />;
   }
 
-  // 🧑‍🏫 STAFF
+  // 🧑‍🏫 STAFF LOGIN SUCCESS
   if (userType === "staff") {
     return <StaffPage staffName={userId} logout={handleLogout} />;
   }
 
-  // 🔐 LOGIN PAGE
-  return <LoginPage onLogin={handleLogin} />;
+  // 🆕 REGISTER PAGE
+  if (page === "register") {
+    return (
+      <RegisterPage
+        onBack={() => setPage("login")}
+      />
+    );
+  }
+
+  // 🔐 LOGIN PAGE (DEFAULT)
+  return (
+    <LoginPage
+      onLogin={handleLogin}
+      onRegister={() => setPage("register")} // ✅ TAMBAH
+    />
+  );
 }
 
 export default App;
