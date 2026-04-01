@@ -262,8 +262,8 @@ function StaffPage({ staffName, logout }) {
         </div>
 
         <div style={{ ...statCard }}>
-          <div style={cardTitle}>Rekod Kehadiran</div>
-          <div style={cardValue}>Lihat Kehadiran</div>
+          <div style={cardTitle}>Attendance Record</div>
+          <div style={cardValue}>Attendance List</div>
         </div>
       </div>
 
