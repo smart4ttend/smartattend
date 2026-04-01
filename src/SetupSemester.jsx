@@ -9,7 +9,7 @@ function SetupSemester({ staffName }) {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Senarai kelas (ubah ikut institusi)
+  // ✅ Class list (customize based on institution)
   const CLASS_OPTIONS = ["DUP1A", "DUP1B", "DUP1C", "DRT1"];
 
   // ===============================
@@ -37,10 +37,10 @@ function SetupSemester({ staffName }) {
   // ADD COURSE + CLASSES
   // ===============================
   const addCourse = async () => {
-    if (!courseCode.trim()) return alert("Sila isi Course Code.");
-    if (!semester.trim()) return alert("Sila pilih semester.");
+    if (!courseCode.trim()) return alert("Please enter Course Code.");
+    if (!semester.trim()) return alert("Please select semester.");
     if (selectedClasses.length === 0)
-      return alert("Sila pilih sekurang-kurangnya 1 kelas.");
+      return alert("Please select at least one class.");
 
     try {
       setLoading(true);
@@ -58,10 +58,10 @@ function SetupSemester({ staffName }) {
 
       if (courseErr) {
         if (courseErr.code !== "23505") {
-          alert("Gagal tambah kursus: " + courseErr.message);
+          alert("Failed to add course: " + courseErr.message);
           return;
         }
-        // jika duplicate (sudah wujud), kita teruskan simpan kelas
+        // if duplicate, continue to save classes
       }
 
       // 2) INSERT course_classes (upsert)
@@ -75,11 +75,11 @@ function SetupSemester({ staffName }) {
         .upsert(rowsToInsert, { onConflict: "course_code,class_code" });
 
       if (classErr) {
-        alert("Gagal simpan kelas kursus: " + classErr.message);
+        alert("Failed to save class list: " + classErr.message);
         return;
       }
 
-      alert("✅ Kursus & kelas berjaya disimpan!");
+      alert("✅ Course and classes saved successfully!");
 
       // reset
       setCourseCode("");
@@ -97,7 +97,7 @@ function SetupSemester({ staffName }) {
   // ===============================
   const deleteCourse = async (course) => {
     const confirmDelete = window.confirm(
-      `Padam kursus ${course.course_code} untuk semester ${course.semester}?`
+      `Delete course ${course.course_code} for semester ${course.semester}?`
     );
     if (!confirmDelete) return;
 
@@ -111,7 +111,7 @@ function SetupSemester({ staffName }) {
     setLoading(false);
 
     if (error) {
-      alert("Gagal padam: " + error.message);
+      alert("Delete failed: " + error.message);
       return;
     }
 
@@ -123,10 +123,10 @@ function SetupSemester({ staffName }) {
   // ===============================
   return (
     <div style={{ padding: 20 }}>
-      <h3>Setup Kursus Semester</h3>
+      <h3>Semester Course Setup</h3>
       <p style={{ color: "#555" }}>
-        Pensyarah daftar kursus yang diajar & pilih kelas terlibat (sekali awal
-        semester).
+        Lecturer registers courses taught and selects involved classes (once at
+        the beginning of the semester).
       </p>
 
       {/* FORM */}
@@ -159,7 +159,7 @@ function SetupSemester({ staffName }) {
         />
 
         <label>
-          <b>Pilih Kelas Terlibat</b>
+          <b>Select Classes</b>
         </label>
         <div style={{ display: "grid", gap: 6, marginTop: 6 }}>
           {CLASS_OPTIONS.map((cls) => (
@@ -192,16 +192,16 @@ function SetupSemester({ staffName }) {
             cursor: "pointer",
           }}
         >
-          {loading ? "Saving..." : "Simpan Kursus"}
+          {loading ? "Saving..." : "Save Course"}
         </button>
       </div>
 
       {/* LIST */}
       <div style={{ marginTop: 25 }}>
-        <h4>Senarai Kursus Semester Ini</h4>
+        <h4>Course List for This Semester</h4>
 
         {courses.length === 0 ? (
-          <p style={{ color: "#777" }}>Tiada kursus didaftarkan lagi.</p>
+          <p style={{ color: "#777" }}>No courses registered yet.</p>
         ) : (
           <table
             border="1"
@@ -210,9 +210,9 @@ function SetupSemester({ staffName }) {
           >
             <thead>
               <tr>
-                <th>Kursus</th>
+                <th>Course</th>
                 <th>Semester</th>
-                <th>Tindakan</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -221,7 +221,7 @@ function SetupSemester({ staffName }) {
                   <td>{c.course_code}</td>
                   <td>{c.semester}</td>
                   <td>
-                    <button onClick={() => deleteCourse(c)}>Padam</button>
+                    <button onClick={() => deleteCourse(c)}>Delete</button>
                   </td>
                 </tr>
               ))}
@@ -230,8 +230,7 @@ function SetupSemester({ staffName }) {
         )}
 
         <p style={{ marginTop: 10, color: "#555", fontSize: 13 }}>
-          📌 Nota: Kelas terlibat disimpan dalam table <b>course_classes</b>.
-          Pada langkah 2B nanti, Create Session akan auto ambil kelas dari situ.
+          📌 Note: Class list is stored in <b>course_classes</b> table.
         </p>
       </div>
     </div>
