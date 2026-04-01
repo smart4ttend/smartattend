@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { supabase } from "./supabase";
 
-function LoginPage({ onLogin }) {
+function LoginPage({ onLogin, onRegister }) {
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -65,6 +65,9 @@ function LoginPage({ onLogin }) {
       >
         {loading ? "Checking..." : "Login"}
       </button>
+      <button onClick={onRegister}>
+  Daftar Pensyarah
+</button>
     </div>
   );
 }
