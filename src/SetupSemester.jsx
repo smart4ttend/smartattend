@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
-function SetupSemester({ staffName }) {
+function SetupSemester({ staffName, onSelectCourse }) {
   const [semester, setSemester] = useState("2025/2026");
   const [courseCode, setCourseCode] = useState("");
   const [selectedClasses, setSelectedClasses] = useState("");
@@ -26,9 +26,9 @@ function SetupSemester({ staffName }) {
   };
 
   useEffect(() => {
-  fetchCourses();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [semester, staffName]);
+    fetchCourses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [semester, staffName]);
 
   // ===============================
   // ADD COURSE + CLASSES
@@ -42,7 +42,6 @@ function SetupSemester({ staffName }) {
     try {
       setLoading(true);
 
-      // INSERT lecturer_courses
       const { error: courseErr } = await supabase
         .from("lecturer_courses")
         .insert([
@@ -58,7 +57,6 @@ function SetupSemester({ staffName }) {
         return;
       }
 
-      // PROCESS CLASS INPUT
       const classArray = selectedClasses
         .split(",")
         .map((c) => c.trim())
@@ -99,7 +97,7 @@ function SetupSemester({ staffName }) {
       <h3>Semester Course Setup</h3>
 
       <p style={{ color: "#555" }}>
-        Lecturer registers courses and types class names manually.
+        Click a course to upload student list.
       </p>
 
       {/* FORM */}
@@ -179,7 +177,20 @@ function SetupSemester({ staffName }) {
             </thead>
             <tbody>
               {courses.map((c) => (
-                <tr key={c.id}>
+                <tr
+                  key={c.id}
+                  onClick={() => onSelectCourse(c)} // 🔥 CLICK HERE
+                  style={{
+                    cursor: "pointer",
+                    transition: "0.2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.background = "#f1f5ff")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.background = "white")
+                  }
+                >
                   <td>{c.course_code}</td>
                   <td>{c.semester}</td>
                 </tr>
