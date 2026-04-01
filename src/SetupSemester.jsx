@@ -20,7 +20,7 @@ function SetupSemester({ staffName }) {
     const { data, error } = await supabase
       .from("lecturer_courses")
       .select("*")
-      .eq("lecturer_name", staffName)
+      .ilike("lecturer_name", staffName)
       .eq("semester", semester)
       .order("course_code", { ascending: true });
 
