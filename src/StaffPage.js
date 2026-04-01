@@ -42,6 +42,7 @@ const cardValue = {
 
 function StaffPage({ staffName, logout }) {
   const [page, setPage] = useState("dashboard");
+  const [selectedCourse, setSelectedCourse] = useState(null);
 
   const [course, setCourse] = useState("");
   const [classStart, setClassStart] = useState("");
@@ -55,7 +56,6 @@ function StaffPage({ staffName, logout }) {
 
   const [selectedClass, setSelectedClass] = useState("");
 
-  // ❌ block student access
   const isStudentId = /^[A-Z]\d{3,}$/.test(staffName);
   if (!staffName || isStudentId) {
     return (
@@ -144,83 +144,105 @@ function StaffPage({ staffName, logout }) {
 
   return (
     <div style={container}>
-      {/* DASHBOARD HEADER */}
+      {/* DASHBOARD */}
       {page === "dashboard" && (
         <>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "25px",
-            }}
-          >
-            <div style={header}>
-              🎓 SmartAttend Lecturer Dashboard
-            </div>
-
-            <button
-              onClick={logout}
-              style={{
-                background: "#d32f2f",
-                color: "#fff",
-                padding: "8px 14px",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-              }}
-            >
-              Logout
-            </button>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div style={header}>🎓 SmartAttend Lecturer Dashboard</div>
+            <button onClick={logout}>Logout</button>
           </div>
 
           <h2>Welcome, {staffName}</h2>
+
+          <div style={cardGrid}>
+            <div style={statCard} onClick={() => setPage("setup")}>
+              <div style={cardTitle}>Profile</div>
+              <div style={cardValue}>Setup Semester</div>
+            </div>
+
+            <div style={statCard} onClick={() => setPage("session")}>
+              <div style={cardTitle}>Create Session</div>
+              <div style={cardValue}>Generate QR</div>
+            </div>
+
+            <div style={statCard} onClick={() => setPage("attendance")}>
+              <div style={cardTitle}>Attendance Record</div>
+              <div style={cardValue}>View Records</div>
+            </div>
+          </div>
         </>
       )}
 
-      {/* DASHBOARD */}
-      {page === "dashboard" && (
-        <div style={cardGrid}>
-          <div
-            style={{ ...statCard, cursor: "pointer" }}
-            onClick={() => setPage("setup")}
-          >
-            <div style={cardTitle}>Profile</div>
-            <div style={cardValue}>Setup Semester</div>
-          </div>
-
-          <div
-            style={{ ...statCard, cursor: "pointer" }}
-            onClick={() => setPage("session")}
-          >
-            <div style={cardTitle}>Create Session</div>
-            <div style={cardValue}>Generate QR</div>
-          </div>
-
-          <div
-            style={{ ...statCard, cursor: "pointer" }}
-            onClick={() => setPage("attendance")}
-          >
-            <div style={cardTitle}>Attendance Record</div>
-            <div style={cardValue}>View Records</div>
-          </div>
-        </div>
-      )}
-
-      {/* SETUP PAGE */}
+      {/* SETUP */}
       {page === "setup" && (
         <div>
-          <button onClick={() => setPage("dashboard")}>
-            ← Home
-          </button>
+          <button onClick={() => setPage("dashboard")}>← Home</button>
 
           <h1>Setup Semester</h1>
 
-          <SetupSemester staffName={staffName} />
+          <SetupSemester
+            staffName={staffName}
+            onSelectCourse={(course) => {
+              setSelectedCourse(course);
+              setPage("upload");
+            }}
+          />
         </div>
       )}
 
-      {/* SESSION PAGE */}
+      {/* 🔥 UPLOAD PAGE */}
+      {page === "upload" && (
+        <div>
+          <button onClick={() => setPage("setup")}>
+            ← Back to Courses
+          </button>
+
+          <h2>Upload Student List</h2>
+
+          <p><b>Course:</b> {selectedCourse?.course_code}</p>
+          <p><b>Semester:</b> {selectedCourse?.semester}</p>
+
+          <input
+            type="file"
+            accept=".csv"
+            onChange={async (e) => {
+              const file = e.target.files[0];
+              if (!file) return;
+
+              try {
+                const text = await file.text();
+                const rows = text.split("\n").slice(1);
+
+                const students = rows
+                  .map((row) => {
+                    const [matric_no, name, class_name] = row.split(",");
+                    return {
+                      matric_no: matric_no?.trim(),
+                      name: name?.trim(),
+                      class_name: class_name?.trim(),
+                      course_code: selectedCourse.course_code,
+                    };
+                  })
+                  .filter((s) => s.matric_no && s.name);
+
+                const { error } = await supabase
+                  .from("students")
+                  .insert(students);
+
+                if (error) {
+                  alert("Upload failed: " + error.message);
+                } else {
+                  alert("✅ Student list uploaded!");
+                }
+              } catch (err) {
+                alert("Error reading file");
+              }
+            }}
+          />
+        </div>
+      )}
+
+      {/* SESSION */}
       {page === "session" && (
         <div>
           <button onClick={() => setPage("dashboard")}>← Back</button>
@@ -233,44 +255,28 @@ function StaffPage({ staffName, logout }) {
             onChange={(e) => setCourse(e.target.value)}
           />
 
-          <input
-            type="datetime-local"
-            value={classStart}
-            onChange={(e) => setClassStart(e.target.value)}
-          />
-
-          <input
-            type="datetime-local"
-            value={lateAfter}
-            onChange={(e) => setLateAfter(e.target.value)}
-          />
-
-          <input
-            type="datetime-local"
-            value={classEnd}
-            onChange={(e) => setClassEnd(e.target.value)}
-          />
+          <input type="datetime-local" value={classStart} onChange={(e) => setClassStart(e.target.value)} />
+          <input type="datetime-local" value={lateAfter} onChange={(e) => setLateAfter(e.target.value)} />
+          <input type="datetime-local" value={classEnd} onChange={(e) => setClassEnd(e.target.value)} />
 
           <button onClick={createSession}>
             {loading ? "Creating..." : "Create Session"}
           </button>
 
           {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
-
           {sessionId && <AttendanceList sessionId={sessionId} />}
         </div>
       )}
 
-      {/* ATTENDANCE PAGE */}
+      {/* ATTENDANCE */}
       {page === "attendance" && (
         <div>
           <button onClick={() => setPage("dashboard")}>← Back</button>
 
           <h3>Attendance Record</h3>
 
-          {/* 🔥 INPUT TYPE (replace dropdown) */}
           <input
-            placeholder="Enter Class (e.g. DUP1A)"
+            placeholder="Enter Class"
             value={selectedClass}
             onChange={(e) =>
               setSelectedClass(e.target.value.toUpperCase())
