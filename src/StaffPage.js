@@ -211,7 +211,7 @@ function StaffPage({ staffName, logout }) {
       {page === "setup" && (
         <div>
           <button onClick={() => setPage("dashboard")}>
-            ← Halaman Utama
+            ← Home
           </button>
 
           <h1>Setup Semester</h1>
