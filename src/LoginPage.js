@@ -49,7 +49,7 @@ function LoginPage({ onLogin }) {
 
       <input
         type="text"
-        placeholder="Masukkan ID Pensyarah (contoh: PTS.50010/1/43)"
+        placeholder="Masukkan ID Pensyarah (contoh: PTS.500.10/1/43)"
         value={userId}
         onChange={(e) => setUserId(e.target.value)}
         style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
