@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 function SetupSemester({ staffName }) {
   const [semester, setSemester] = useState("2025/2026");
   const [courseCode, setCourseCode] = useState("");
-  const [selectedClasses, setSelectedClasses] = useState(""); // ✅ STRING now
+  const [selectedClasses, setSelectedClasses] = useState("");
 
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -26,9 +26,9 @@ function SetupSemester({ staffName }) {
   };
 
   useEffect(() => {
-    fetchCourses();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [semester, staffName]);
+  fetchCourses();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [semester, staffName]);
 
   // ===============================
   // ADD COURSE + CLASSES
@@ -42,7 +42,7 @@ function SetupSemester({ staffName }) {
     try {
       setLoading(true);
 
-      // 1️⃣ INSERT lecturer_courses
+      // INSERT lecturer_courses
       const { error: courseErr } = await supabase
         .from("lecturer_courses")
         .insert([
@@ -53,15 +53,12 @@ function SetupSemester({ staffName }) {
           },
         ]);
 
-      if (courseErr) {
-        if (courseErr.code !== "23505") {
-          alert("Failed to add course: " + courseErr.message);
-          return;
-        }
-        // duplicate ok → continue
+      if (courseErr && courseErr.code !== "23505") {
+        alert("Failed to add course: " + courseErr.message);
+        return;
       }
 
-      // 2️⃣ PROCESS CLASS INPUT (comma separated)
+      // PROCESS CLASS INPUT
       const classArray = selectedClasses
         .split(",")
         .map((c) => c.trim())
@@ -72,7 +69,6 @@ function SetupSemester({ staffName }) {
         class_code: cls,
       }));
 
-      // 3️⃣ INSERT course_classes
       const { error: classErr } = await supabase
         .from("course_classes")
         .upsert(rowsToInsert, {
@@ -86,41 +82,13 @@ function SetupSemester({ staffName }) {
 
       alert("✅ Course and classes saved successfully!");
 
-      // reset
       setCourseCode("");
       setSelectedClasses("");
 
-      // refresh
       fetchCourses();
     } finally {
       setLoading(false);
     }
-  };
-
-  // ===============================
-  // DELETE COURSE
-  // ===============================
-  const deleteCourse = async (course) => {
-    const confirmDelete = window.confirm(
-      `Delete course ${course.course_code} for semester ${course.semester}?`
-    );
-    if (!confirmDelete) return;
-
-    setLoading(true);
-
-    const { error } = await supabase
-      .from("lecturer_courses")
-      .delete()
-      .eq("id", course.id);
-
-    setLoading(false);
-
-    if (error) {
-      alert("Delete failed: " + error.message);
-      return;
-    }
-
-    fetchCourses();
   };
 
   // ===============================
@@ -207,7 +175,6 @@ function SetupSemester({ staffName }) {
               <tr>
                 <th>Course</th>
                 <th>Semester</th>
-                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -215,11 +182,6 @@ function SetupSemester({ staffName }) {
                 <tr key={c.id}>
                   <td>{c.course_code}</td>
                   <td>{c.semester}</td>
-                  <td>
-                    <button onClick={() => deleteCourse(c)}>
-                      Delete
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
