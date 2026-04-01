@@ -84,6 +84,8 @@ return (
       <button
         onClick={handleLogin}
         disabled={loading}
+        onMouseOver={(e) => (e.target.style.background = "#3a73e0")}
+        onMouseOut={(e) => (e.target.style.background = "#4f8cff")}
         style={{
           width: "100%",
           padding: "10px",
