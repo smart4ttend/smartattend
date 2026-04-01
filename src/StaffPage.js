@@ -61,15 +61,15 @@ function StudentList() {
 
   return (
     <div style={{ marginTop: 30 }}>
-      <h3>📚 Senarai Pelajar</h3>
+      <h3>📚 Student List</h3>
 
       <table border="1" cellPadding="6" style={{ width: "100%" }}>
         <thead>
           <tr>
             <th>No</th>
-            <th>Nama</th>
-            <th>No Matriks</th>
-            <th>Kelas</th>
+            <th>Name</th>
+            <th>Matric No</th>
+            <th>Class</th>
           </tr>
         </thead>
 
@@ -90,7 +90,7 @@ function StudentList() {
 
 function StaffPage({ staffName, logout }) {
 
-  const [activeTab, setActiveTab] = useState(null);
+  const [page, setPage] = useState("dashboard");
 
   const [course, setCourse] = useState("");
   const [classStart, setClassStart] = useState("");
@@ -108,8 +108,8 @@ function StaffPage({ staffName, logout }) {
   if (!staffName || isStudentId) {
     return (
       <div style={{ padding: 30 }}>
-        <h3>❌ Akses Ditolak</h3>
-        <p>Halaman ini hanya untuk staff sahaja.</p>
+        <h3>❌ Access Denied</h3>
+        <p>This page is for staff only.</p>
         <button onClick={logout}>Logout</button>
       </div>
     );
@@ -140,26 +140,26 @@ function StaffPage({ staffName, logout }) {
       const { error } = await supabase.from("students").insert(students);
 
       if (error) {
-        alert("Upload gagal: " + error.message);
+        alert("Upload failed: " + error.message);
       } else {
-        alert("Namelist berjaya diupload!");
+        alert("Namelist uploaded successfully!");
       }
     } catch (err) {
-      alert("Error membaca file CSV");
+      alert("Error reading CSV file");
     }
   };
 
   // ===============================
-  // DELETE IKUT CLASS
+  // DELETE BY CLASS
   // ===============================
   const deleteByClass = async () => {
     if (!selectedClass) {
-      alert("Sila pilih kelas dahulu");
+      alert("Please select a class");
       return;
     }
 
     const confirmDelete = window.confirm(
-      `Padam semua pelajar kelas ${selectedClass}?`
+      `Delete all students from ${selectedClass}?`
     );
     if (!confirmDelete) return;
 
@@ -169,16 +169,19 @@ function StaffPage({ staffName, logout }) {
       .eq("class_name", selectedClass);
 
     if (error) {
-      alert("Gagal padam: " + error.message);
+      alert("Delete failed: " + error.message);
     } else {
-      alert("Pelajar berjaya dipadam!");
+      alert("Students deleted successfully!");
     }
   };
 
+  // ===============================
+  // CREATE SESSION
+  // ===============================
   const createSession = async () => {
 
     if (!course || !classStart || !lateAfter || !classEnd) {
-      alert("Sila lengkapkan Course dan masa kelas.");
+      alert("Please fill in all fields.");
       return;
     }
 
@@ -187,7 +190,7 @@ function StaffPage({ staffName, logout }) {
     const expiresAtValue = new Date(classEnd);
 
     if (!(classStartAt < lateAfterAt && lateAfterAt < expiresAtValue)) {
-      alert("Susunan masa tidak sah.");
+      alert("Invalid time sequence.");
       return;
     }
 
@@ -217,7 +220,7 @@ function StaffPage({ staffName, logout }) {
       setSessionId(data.id);
 
     } catch (err) {
-      setErrorMsg("Ralat tidak dijangka.");
+      setErrorMsg("Unexpected error.");
     } finally {
       setLoading(false);
     }
@@ -226,6 +229,7 @@ function StaffPage({ staffName, logout }) {
   return (
     <div style={container}>
 
+      {/* HEADER */}
       <div style={{
         display: "flex",
         justifyContent: "space-between",
@@ -250,26 +254,33 @@ function StaffPage({ staffName, logout }) {
 
       <h2>Welcome, {staffName}</h2>
 
-      <div style={cardGrid}>
-        <div style={{ ...statCard, cursor: "pointer" }} onClick={() => setActiveTab("setup")}>
-          <div style={cardTitle}>Profile</div>
-          <div style={cardValue}>Setup Semester</div>
-        </div>
+      {/* DASHBOARD */}
+      {page === "dashboard" && (
+        <div style={cardGrid}>
 
-        <div style={{ ...statCard, cursor: "pointer" }} onClick={() => setActiveTab("session")}>
-          <div style={cardTitle}>Create Session</div>
-          <div style={cardValue}>Generate QR</div>
-        </div>
+          <div style={{ ...statCard, cursor: "pointer" }} onClick={() => setPage("setup")}>
+            <div style={cardTitle}>Profile</div>
+            <div style={cardValue}>Setup Semester</div>
+          </div>
 
-        <div style={{ ...statCard }}>
-          <div style={cardTitle}>Attendance Record</div>
-          <div style={cardValue}>Attendance List</div>
-        </div>
-      </div>
+          <div style={{ ...statCard, cursor: "pointer" }} onClick={() => setPage("session")}>
+            <div style={cardTitle}>Create Session</div>
+            <div style={cardValue}>Generate QR</div>
+          </div>
 
-      {/* SETUP TAB */}
-      {activeTab === "setup" && (
+          <div style={{ ...statCard, cursor: "pointer" }} onClick={() => setPage("attendance")}>
+            <div style={cardTitle}>Attendance Record</div>
+            <div style={cardValue}>View Records</div>
+          </div>
+
+        </div>
+      )}
+
+      {/* SETUP PAGE */}
+      {page === "setup" && (
         <div>
+
+          <button onClick={() => setPage("dashboard")}>← Back</button>
 
           <div style={{
             marginBottom: 20,
@@ -289,9 +300,11 @@ function StaffPage({ staffName, logout }) {
         </div>
       )}
 
-      {/* SESSION TAB */}
-      {activeTab === "session" && (
+      {/* SESSION PAGE */}
+      {page === "session" && (
         <div>
+
+          <button onClick={() => setPage("dashboard")}>← Back</button>
 
           <h3>Create Attendance Session</h3>
 
@@ -302,16 +315,9 @@ function StaffPage({ staffName, logout }) {
             maxWidth: 520,
           }}>
 
-            <label><b>Course Code</b></label>
-            <input value={course} onChange={(e) => setCourse(e.target.value)} style={{ width: "100%", padding: 8 }} />
-
-            <label><b>Masa Mula</b></label>
+            <input placeholder="Course Code" value={course} onChange={(e) => setCourse(e.target.value)} />
             <input type="datetime-local" value={classStart} onChange={(e) => setClassStart(e.target.value)} />
-
-            <label><b>Lambat</b></label>
             <input type="datetime-local" value={lateAfter} onChange={(e) => setLateAfter(e.target.value)} />
-
-            <label><b>Tamat</b></label>
             <input type="datetime-local" value={classEnd} onChange={(e) => setClassEnd(e.target.value)} />
 
             <button onClick={createSession}>
@@ -321,36 +327,37 @@ function StaffPage({ staffName, logout }) {
             {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
           </div>
 
-          {/* 🔥 DELETE DIPINDAH KE SINI */}
-          {sessionId && (
-            <div style={{ marginTop: 20 }}>
+          {sessionId && <AttendanceList sessionId={sessionId} />}
 
-              <div style={{ marginBottom: 15 }}>
-                <select
-                  value={selectedClass}
-                  onChange={(e) => setSelectedClass(e.target.value)}
-                  style={{ padding: 6, marginRight: 10 }}
-                >
-                  <option value="">-- Pilih Kelas --</option>
-                  <option value="DUP1A">DUP1A</option>
-                  <option value="DUP1B">DUP1B</option>
-                  <option value="DUP1C">DUP1C</option>
-                </select>
+        </div>
+      )}
 
-                <button onClick={deleteByClass} style={{
-                  padding: "6px 12px",
-                  background: "#d32f2f",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                }}>
-                  Delete by Class
-                </button>
-              </div>
+      {/* ATTENDANCE PAGE */}
+      {page === "attendance" && (
+        <div>
 
-              <AttendanceList sessionId={sessionId} />
-            </div>
+          <button onClick={() => setPage("dashboard")}>← Back</button>
+
+          <h3>Attendance Record</h3>
+
+          <div style={{ marginBottom: 15 }}>
+            <select
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+            >
+              <option value="">-- Select Class --</option>
+              <option value="DUP1A">DUP1A</option>
+              <option value="DUP1B">DUP1B</option>
+              <option value="DUP1C">DUP1C</option>
+            </select>
+
+            <button onClick={deleteByClass}>Delete by Class</button>
+          </div>
+
+          {sessionId ? (
+            <AttendanceList sessionId={sessionId} />
+          ) : (
+            <p>No active session.</p>
           )}
 
         </div>
