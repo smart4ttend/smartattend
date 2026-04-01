@@ -4,12 +4,10 @@ import { supabase } from "./supabase";
 function SetupSemester({ staffName }) {
   const [semester, setSemester] = useState("2025/2026");
   const [courseCode, setCourseCode] = useState("");
-  const [selectedClasses, setSelectedClasses] = useState("");
+  const [selectedClasses, setSelectedClasses] = useState(""); // ✅ STRING now
 
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  const [activeCourse, setActiveCourse] = useState(null); // ✅ NEW
 
   // ===============================
   // FETCH COURSE LIST
@@ -44,6 +42,7 @@ function SetupSemester({ staffName }) {
     try {
       setLoading(true);
 
+      // 1️⃣ INSERT lecturer_courses
       const { error: courseErr } = await supabase
         .from("lecturer_courses")
         .insert([
@@ -59,8 +58,10 @@ function SetupSemester({ staffName }) {
           alert("Failed to add course: " + courseErr.message);
           return;
         }
+        // duplicate ok → continue
       }
 
+      // 2️⃣ PROCESS CLASS INPUT (comma separated)
       const classArray = selectedClasses
         .split(",")
         .map((c) => c.trim())
@@ -71,6 +72,7 @@ function SetupSemester({ staffName }) {
         class_code: cls,
       }));
 
+      // 3️⃣ INSERT course_classes
       const { error: classErr } = await supabase
         .from("course_classes")
         .upsert(rowsToInsert, {
@@ -84,9 +86,11 @@ function SetupSemester({ staffName }) {
 
       alert("✅ Course and classes saved successfully!");
 
+      // reset
       setCourseCode("");
       setSelectedClasses("");
 
+      // refresh
       fetchCourses();
     } finally {
       setLoading(false);
@@ -94,43 +98,29 @@ function SetupSemester({ staffName }) {
   };
 
   // ===============================
-  // CSV UPLOAD (LINK TO COURSE)
+  // DELETE COURSE
   // ===============================
-  const handleFileUpload = async (e) => {
-    if (!activeCourse) {
-      alert("Please select a course first");
+  const deleteCourse = async (course) => {
+    const confirmDelete = window.confirm(
+      `Delete course ${course.course_code} for semester ${course.semester}?`
+    );
+    if (!confirmDelete) return;
+
+    setLoading(true);
+
+    const { error } = await supabase
+      .from("lecturer_courses")
+      .delete()
+      .eq("id", course.id);
+
+    setLoading(false);
+
+    if (error) {
+      alert("Delete failed: " + error.message);
       return;
     }
 
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const rows = text.split("\n").slice(1);
-
-      const students = rows
-        .map((row) => {
-          const [matric_no, name, class_name] = row.split(",");
-          return {
-            matric_no: matric_no?.trim(),
-            name: name?.trim(),
-            class_name: class_name?.trim(),
-            course_code: activeCourse, // 🔥 IMPORTANT
-          };
-        })
-        .filter((s) => s.matric_no && s.name);
-
-      const { error } = await supabase.from("students").insert(students);
-
-      if (error) {
-        alert("Upload failed: " + error.message);
-      } else {
-        alert(`Students uploaded for ${activeCourse}`);
-      }
-    } catch (err) {
-      alert("Error reading CSV file");
-    }
+    fetchCourses();
   };
 
   // ===============================
@@ -141,7 +131,7 @@ function SetupSemester({ staffName }) {
       <h3>Semester Course Setup</h3>
 
       <p style={{ color: "#555" }}>
-        Lecturer registers courses and uploads student list per course.
+        Lecturer registers courses and types class names manually.
       </p>
 
       {/* FORM */}
@@ -197,9 +187,9 @@ function SetupSemester({ staffName }) {
         </button>
       </div>
 
-      {/* COURSE LIST */}
+      {/* LIST */}
       <div style={{ marginTop: 25 }}>
-        <h4>Course List for This Semester</h4>
+        <h4>Course List</h4>
 
         {courses.length === 0 ? (
           <p style={{ color: "#777" }}>No courses registered yet.</p>
@@ -226,18 +216,8 @@ function SetupSemester({ staffName }) {
                   <td>{c.course_code}</td>
                   <td>{c.semester}</td>
                   <td>
-                    <button
-                      onClick={() => setActiveCourse(c.course_code)}
-                      style={{
-                        padding: "6px 12px",
-                        background: "#4f8cff",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Upload Student List
+                    <button onClick={() => deleteCourse(c)}>
+                      Delete
                     </button>
                   </td>
                 </tr>
@@ -246,27 +226,6 @@ function SetupSemester({ staffName }) {
           </table>
         )}
       </div>
-
-      {/* UPLOAD SECTION */}
-      {activeCourse && (
-        <div
-          style={{
-            marginTop: 20,
-            padding: 15,
-            background: "#fff",
-            borderRadius: 10,
-            boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-            maxWidth: 400,
-          }}
-        >
-          <h4>Upload Student List (CSV)</h4>
-          <p style={{ fontSize: 13 }}>
-            Course: <b>{activeCourse}</b>
-          </p>
-
-          <input type="file" accept=".csv" onChange={handleFileUpload} />
-        </div>
-      )}
     </div>
   );
 }
