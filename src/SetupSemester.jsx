@@ -4,13 +4,10 @@ import { supabase } from "./supabase";
 function SetupSemester({ staffName }) {
   const [semester, setSemester] = useState("2025/2026");
   const [courseCode, setCourseCode] = useState("");
-  const [selectedClasses, setSelectedClasses] = useState([]);
+  const [selectedClasses, setSelectedClasses] = useState(""); // ✅ STRING now
 
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
-
-  // ✅ Class list (customize based on institution)
-  const CLASS_OPTIONS = ["DUP1A", "DUP1B", "DUP1C", "DRT1"];
 
   // ===============================
   // FETCH COURSE LIST
@@ -39,13 +36,13 @@ function SetupSemester({ staffName }) {
   const addCourse = async () => {
     if (!courseCode.trim()) return alert("Please enter Course Code.");
     if (!semester.trim()) return alert("Please select semester.");
-    if (selectedClasses.length === 0)
-      return alert("Please select at least one class.");
+    if (!selectedClasses.trim())
+      return alert("Please enter at least one class.");
 
     try {
       setLoading(true);
 
-      // 1) INSERT lecturer_courses
+      // 1️⃣ INSERT lecturer_courses
       const { error: courseErr } = await supabase
         .from("lecturer_courses")
         .insert([
@@ -61,18 +58,26 @@ function SetupSemester({ staffName }) {
           alert("Failed to add course: " + courseErr.message);
           return;
         }
-        // if duplicate, continue to save classes
+        // duplicate ok → continue
       }
 
-      // 2) INSERT course_classes (upsert)
-      const rowsToInsert = selectedClasses.map((cls) => ({
+      // 2️⃣ PROCESS CLASS INPUT (comma separated)
+      const classArray = selectedClasses
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean);
+
+      const rowsToInsert = classArray.map((cls) => ({
         course_code: courseCode.trim().toUpperCase(),
         class_code: cls,
       }));
 
+      // 3️⃣ INSERT course_classes
       const { error: classErr } = await supabase
         .from("course_classes")
-        .upsert(rowsToInsert, { onConflict: "course_code,class_code" });
+        .upsert(rowsToInsert, {
+          onConflict: "course_code,class_code",
+        });
 
       if (classErr) {
         alert("Failed to save class list: " + classErr.message);
@@ -83,7 +88,7 @@ function SetupSemester({ staffName }) {
 
       // reset
       setCourseCode("");
-      setSelectedClasses([]);
+      setSelectedClasses("");
 
       // refresh
       fetchCourses();
@@ -124,9 +129,9 @@ function SetupSemester({ staffName }) {
   return (
     <div style={{ padding: 20 }}>
       <h3>Semester Course Setup</h3>
+
       <p style={{ color: "#555" }}>
-        Lecturer registers courses taught and selects involved classes (once at
-        the beginning of the semester).
+        Lecturer registers courses and types class names manually.
       </p>
 
       {/* FORM */}
@@ -138,9 +143,7 @@ function SetupSemester({ staffName }) {
           maxWidth: 520,
         }}
       >
-        <label>
-          <b>Semester</b>
-        </label>
+        <label><b>Semester</b></label>
         <input
           value={semester}
           onChange={(e) => setSemester(e.target.value)}
@@ -148,9 +151,7 @@ function SetupSemester({ staffName }) {
           style={{ width: "100%", padding: 8, marginBottom: 10 }}
         />
 
-        <label>
-          <b>Course Code</b>
-        </label>
+        <label><b>Course Code</b></label>
         <input
           value={courseCode}
           onChange={(e) => setCourseCode(e.target.value)}
@@ -158,29 +159,19 @@ function SetupSemester({ staffName }) {
           style={{ width: "100%", padding: 8, marginBottom: 10 }}
         />
 
-        <label>
-          <b>Select Classes</b>
-        </label>
-        <div style={{ display: "grid", gap: 6, marginTop: 6 }}>
-          {CLASS_OPTIONS.map((cls) => (
-            <label key={cls} style={{ display: "flex", gap: 8 }}>
-              <input
-                type="checkbox"
-                checked={selectedClasses.includes(cls)}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setSelectedClasses([...selectedClasses, cls]);
-                  } else {
-                    setSelectedClasses(
-                      selectedClasses.filter((c) => c !== cls)
-                    );
-                  }
-                }}
-              />
-              {cls}
-            </label>
-          ))}
-        </div>
+        <label><b>Enter Class(es)</b></label>
+        <input
+          value={selectedClasses}
+          onChange={(e) =>
+            setSelectedClasses(e.target.value.toUpperCase())
+          }
+          placeholder="Example: DUP1A or DUP1A,DUP1B"
+          style={{ width: "100%", padding: 8, marginBottom: 5 }}
+        />
+
+        <p style={{ fontSize: 12, color: "#777" }}>
+          Separate multiple classes with comma (,)
+        </p>
 
         <button
           onClick={addCourse}
@@ -206,7 +197,11 @@ function SetupSemester({ staffName }) {
           <table
             border="1"
             cellPadding="8"
-            style={{ borderCollapse: "collapse", width: "100%", maxWidth: 700 }}
+            style={{
+              borderCollapse: "collapse",
+              width: "100%",
+              maxWidth: 700,
+            }}
           >
             <thead>
               <tr>
@@ -221,16 +216,15 @@ function SetupSemester({ staffName }) {
                   <td>{c.course_code}</td>
                   <td>{c.semester}</td>
                   <td>
-                    <button onClick={() => deleteCourse(c)}>Delete</button>
+                    <button onClick={() => deleteCourse(c)}>
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
-
-        <p style={{ marginTop: 10, color: "#555", fontSize: 13 }}>
-        </p>
       </div>
     </div>
   );
