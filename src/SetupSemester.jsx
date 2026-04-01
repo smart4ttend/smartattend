@@ -230,7 +230,6 @@ function SetupSemester({ staffName }) {
         )}
 
         <p style={{ marginTop: 10, color: "#555", fontSize: 13 }}>
-          📌 Note: Class list is stored in <b>course_classes</b> table.
         </p>
       </div>
     </div>
