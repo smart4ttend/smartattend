@@ -39,37 +39,81 @@ function LoginPage({ onLogin, onRegister }) {
     onLogin("staff", data[0].name);
   };
 
-  return (
-    <div style={{ padding: 30, maxWidth: 400 }}>
-      <h2>SmartAttend Login</h2>
+return (
+  <div
+    style={{
+      height: "100vh",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      background: "linear-gradient(135deg, #4f8cff, #6ed0f6)",
+      fontFamily: "Segoe UI, sans-serif",
+    }}
+  >
+    <div
+      style={{
+        background: "#fff",
+        padding: "40px",
+        borderRadius: "16px",
+        width: "320px",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+        textAlign: "center",
+      }}
+    >
+      <h2 style={{ marginBottom: "10px" }}>🎓 SmartAttend</h2>
 
-      <p style={{ marginBottom: "10px", fontWeight: "500" }}>
+      <p style={{ marginBottom: "20px", color: "#666" }}>
         Login Pensyarah
       </p>
 
       <input
         type="text"
-        placeholder="Masukkan ID Pensyarah (contoh: PTS.500.10/1/43)"
+        placeholder="Masukkan ID Pensyarah"
         value={userId}
         onChange={(e) => setUserId(e.target.value)}
-        style={{ width: "100%", padding: "8px", marginBottom: "10px" }}
+        style={{
+          width: "100%",
+          padding: "10px",
+          borderRadius: "8px",
+          border: "1px solid #ddd",
+          marginBottom: "15px",
+          outline: "none",
+        }}
       />
 
       <button
         onClick={handleLogin}
         disabled={loading}
         style={{
-          padding: "8px 16px",
           width: "100%",
+          padding: "10px",
+          borderRadius: "8px",
+          border: "none",
+          background: "#4f8cff",
+          color: "#fff",
+          fontWeight: "600",
+          cursor: "pointer",
         }}
       >
         {loading ? "Checking..." : "Login"}
       </button>
-      <button onClick={onRegister}>
-  Daftar Pensyarah
-</button>
+
+      <button
+        onClick={onRegister}
+        style={{
+          marginTop: "12px",
+          background: "none",
+          border: "none",
+          color: "#4f8cff",
+          cursor: "pointer",
+          fontSize: "13px",
+        }}
+      >
+        Daftar Pensyarah
+      </button>
     </div>
-  );
+  </div>
+);
 }
 
 export default LoginPage;
