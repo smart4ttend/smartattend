@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, } from "react";
 import { supabase } from "./supabase";
 import AttendanceList from "./AttendanceList";
 import SetupSemester from "./SetupSemester";
@@ -39,54 +39,6 @@ const cardValue = {
   fontSize: "24px",
   fontWeight: "600",
 };
-
-// ===============================
-// STUDENT LIST
-// ===============================
-function StudentList() {
-  const [students, setStudents] = useState([]);
-
-  const fetchStudents = async () => {
-    const { data, error } = await supabase
-      .from("students")
-      .select("*")
-      .order("name");
-
-    if (!error) setStudents(data);
-  };
-
-  useEffect(() => {
-    fetchStudents();
-  }, []);
-
-  return (
-    <div style={{ marginTop: 30 }}>
-      <h3>📚 Student List</h3>
-
-      <table border="1" cellPadding="6" style={{ width: "100%" }}>
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>Name</th>
-            <th>Matric No</th>
-            <th>Class</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {students.map((s, i) => (
-            <tr key={s.matric_no}>
-              <td>{i + 1}</td>
-              <td>{s.name}</td>
-              <td>{s.matric_no}</td>
-              <td>{s.class_name || "-"}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
 
 function StaffPage({ staffName, logout }) {
 
@@ -229,30 +181,34 @@ function StaffPage({ staffName, logout }) {
   return (
     <div style={container}>
 
-      {/* HEADER */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "25px",
-      }}>
-        <div style={header}>
-          🎓 SmartAttend Lecturer Dashboard
-        </div>
+      {/* DASHBOARD HEADER */}
+      {page === "dashboard" && (
+        <>
+          <div style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "25px",
+          }}>
+            <div style={header}>
+              🎓 SmartAttend Lecturer Dashboard
+            </div>
 
-        <button onClick={logout} style={{
-          background: "#d32f2f",
-          color: "#fff",
-          padding: "8px 14px",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-        }}>
-          Logout
-        </button>
-      </div>
+            <button onClick={logout} style={{
+              background: "#d32f2f",
+              color: "#fff",
+              padding: "8px 14px",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}>
+              Logout
+            </button>
+          </div>
 
-      <h2>Welcome, {staffName}</h2>
+          <h2>Welcome, {staffName}</h2>
+        </>
+      )}
 
       {/* DASHBOARD */}
       {page === "dashboard" && (
@@ -280,22 +236,18 @@ function StaffPage({ staffName, logout }) {
       {page === "setup" && (
         <div>
 
-          <button onClick={() => setPage("dashboard")}>← Back</button>
+          <button onClick={() => setPage("dashboard")}>
+            ← Halaman Utama
+          </button>
 
-          <div style={{
-            marginBottom: 20,
-            padding: 15,
-            background: "#fff",
-            borderRadius: 10,
-            boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-            maxWidth: 400,
-          }}>
-            <h4>Upload Namelist (CSV)</h4>
-            <input type="file" accept=".csv" onChange={handleFileUpload} />
-          </div>
+          <h1>Setup Semester</h1>
 
           <SetupSemester staffName={staffName} />
-          <StudentList />
+
+          <div style={{ marginTop: 30 }}>
+            <h3>Upload Student List (CSV)</h3>
+            <input type="file" accept=".csv" onChange={handleFileUpload} />
+          </div>
 
         </div>
       )}
@@ -304,28 +256,22 @@ function StaffPage({ staffName, logout }) {
       {page === "session" && (
         <div>
 
-          <button onClick={() => setPage("dashboard")}>← Back</button>
+          <button onClick={() => setPage("dashboard")}>
+            ← Back
+          </button>
 
           <h3>Create Attendance Session</h3>
 
-          <div style={{
-            border: "1px solid #ddd",
-            padding: 15,
-            borderRadius: 8,
-            maxWidth: 520,
-          }}>
+          <input placeholder="Course Code" value={course} onChange={(e) => setCourse(e.target.value)} />
+          <input type="datetime-local" value={classStart} onChange={(e) => setClassStart(e.target.value)} />
+          <input type="datetime-local" value={lateAfter} onChange={(e) => setLateAfter(e.target.value)} />
+          <input type="datetime-local" value={classEnd} onChange={(e) => setClassEnd(e.target.value)} />
 
-            <input placeholder="Course Code" value={course} onChange={(e) => setCourse(e.target.value)} />
-            <input type="datetime-local" value={classStart} onChange={(e) => setClassStart(e.target.value)} />
-            <input type="datetime-local" value={lateAfter} onChange={(e) => setLateAfter(e.target.value)} />
-            <input type="datetime-local" value={classEnd} onChange={(e) => setClassEnd(e.target.value)} />
+          <button onClick={createSession}>
+            {loading ? "Creating..." : "Create Session"}
+          </button>
 
-            <button onClick={createSession}>
-              {loading ? "Creating..." : "Create Session"}
-            </button>
-
-            {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
-          </div>
+          {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
 
           {sessionId && <AttendanceList sessionId={sessionId} />}
 
@@ -336,23 +282,25 @@ function StaffPage({ staffName, logout }) {
       {page === "attendance" && (
         <div>
 
-          <button onClick={() => setPage("dashboard")}>← Back</button>
+          <button onClick={() => setPage("dashboard")}>
+            ← Back
+          </button>
 
           <h3>Attendance Record</h3>
 
-          <div style={{ marginBottom: 15 }}>
-            <select
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-            >
-              <option value="">-- Select Class --</option>
-              <option value="DUP1A">DUP1A</option>
-              <option value="DUP1B">DUP1B</option>
-              <option value="DUP1C">DUP1C</option>
-            </select>
+          <select
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+          >
+            <option value="">-- Select Class --</option>
+            <option value="DUP1A">DUP1A</option>
+            <option value="DUP1B">DUP1B</option>
+            <option value="DUP1C">DUP1C</option>
+          </select>
 
-            <button onClick={deleteByClass}>Delete by Class</button>
-          </div>
+          <button onClick={deleteByClass}>
+            Delete by Class
+          </button>
 
           {sessionId ? (
             <AttendanceList sessionId={sessionId} />
