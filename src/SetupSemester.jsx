@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "./supabase";
 
 function SetupSemester({ staffName, onSelectCourse }) {
@@ -12,23 +12,22 @@ function SetupSemester({ staffName, onSelectCourse }) {
   // ===============================
   // FETCH COURSE LIST
   // ===============================
-  const fetchCourses = async () => {
-    if (!staffName || !semester) return;
+const fetchCourses = useCallback(async () => {
+  if (!staffName || !semester) return;
 
-    const { data, error } = await supabase
-      .from("lecturer_courses")
-      .select("*")
-      .eq("lecturer_name", staffName)
-      .eq("semester", semester)
-      .order("course_code", { ascending: true });
+  const { data, error } = await supabase
+    .from("lecturer_courses")
+    .select("*")
+    .eq("lecturer_name", staffName)
+    .eq("semester", semester)
+    .order("course_code", { ascending: true });
 
-    if (!error) setCourses(data || []);
-  };
+  if (!error) setCourses(data || []);
+}, [staffName, semester]);
 
-  useEffect(() => {
-    fetchCourses();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [semester, staffName]);
+useEffect(() => {
+  fetchCourses();
+}, [fetchCourses]);
 
   // ===============================
   // ADD COURSE + CLASSES
