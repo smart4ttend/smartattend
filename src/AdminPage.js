@@ -64,6 +64,16 @@ function AdminPage({ staffName, logout }) {
   }, []);
 
   // ===============================
+  // 🔥 LOAD SAVED SESSION
+  // ===============================
+  useEffect(() => {
+    const savedSession = localStorage.getItem("activeSessionId");
+    if (savedSession) {
+      setSessionId(savedSession);
+    }
+  }, []);
+
+  // ===============================
   // ACCESS CONTROL
   // ===============================
   const isStudentId = /^[A-Z]\d{3,}$/.test(staffName);
@@ -118,7 +128,10 @@ function AdminPage({ staffName, logout }) {
         return;
       }
 
+      // ✅ SET + SAVE SESSION
       setSessionId(data.id);
+      localStorage.setItem("activeSessionId", data.id);
+
     } catch {
       setErrorMsg("Unexpected error.");
     } finally {
@@ -186,18 +199,9 @@ function AdminPage({ staffName, logout }) {
 
           {/* TIME INPUT */}
           <div style={{ display: "flex", gap: "10px", marginBottom: 10 }}>
-            <input
-              type="datetime-local"
-              onChange={(e) => setStartTime(e.target.value)}
-            />
-            <input
-              type="datetime-local"
-              onChange={(e) => setLateAfter(e.target.value)}
-            />
-            <input
-              type="datetime-local"
-              onChange={(e) => setEndTime(e.target.value)}
-            />
+            <input type="datetime-local" onChange={(e) => setStartTime(e.target.value)} />
+            <input type="datetime-local" onChange={(e) => setLateAfter(e.target.value)} />
+            <input type="datetime-local" onChange={(e) => setEndTime(e.target.value)} />
           </div>
 
           <button onClick={createEventSession}>
@@ -208,23 +212,15 @@ function AdminPage({ staffName, logout }) {
 
           {/* QR + LIST */}
           {sessionId && (
-            <div
-              style={{
-                display: "flex",
-                gap: "30px",
-                marginTop: 20,
-                alignItems: "flex-start",
-              }}
-            >
+            <div style={{ display: "flex", gap: "30px", marginTop: 20 }}>
+              
               {/* QR */}
-              <div
-                style={{
-                  background: "#fff",
-                  padding: 20,
-                  borderRadius: 12,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                }}
-              >
+              <div style={{
+                background: "#fff",
+                padding: 20,
+                borderRadius: 12,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+              }}>
                 <h4>Scan QR</h4>
 
                 <img
@@ -232,15 +228,14 @@ function AdminPage({ staffName, logout }) {
                   alt="QR"
                 />
 
-                <p>
-                  Event: <b>{eventCode}</b>
-                </p>
+                <p>Event: <b>{eventCode}</b></p>
               </div>
 
               {/* LIVE LIST */}
               <div style={{ flex: 1 }}>
                 <AttendanceList sessionId={sessionId} />
               </div>
+
             </div>
           )}
         </div>
