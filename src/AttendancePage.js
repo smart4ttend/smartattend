@@ -3,15 +3,15 @@ import { supabase } from "./supabase";
 
 function AttendancePage() {
   const params = new URLSearchParams(window.location.search);
-  const sessionId = params.get("session_id"); // backend masih guna session_id
+  const sessionId = params.get("session_id");
 
-  const [identifier, setIdentifier] = useState("");
+  const [participantName, setParticipantName] = useState("");
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   // ===============================
-  // 1️⃣ FETCH EVENT (MASA)
+  // 1️⃣ FETCH EVENT
   // ===============================
   useEffect(() => {
     if (!sessionId) {
@@ -21,7 +21,7 @@ function AttendancePage() {
 
     const fetchEvent = async () => {
       const { data, error } = await supabase
-        .from("attendance_sessions") // backend kekal
+        .from("attendance_sessions")
         .select("class_start_at, late_after, expires_at")
         .eq("id", sessionId)
         .single();
@@ -41,8 +41,8 @@ function AttendancePage() {
   // 2️⃣ SUBMIT CHECK-IN
   // ===============================
   const submitCheckin = async () => {
-    if (!identifier.trim()) {
-      alert("Please enter your identifier");
+    if (!participantName.trim()) {
+      alert("Please enter your name");
       return;
     }
 
@@ -74,8 +74,8 @@ function AttendancePage() {
         .from("attendance_records")
         .insert([
           {
-            session_id: sessionId, // backend kekal
-            student_matric: identifier.trim(), // mapping sahaja
+            session_id: sessionId,
+            student_matric: participantName.trim(), // 🔒 backend kekal
             status,
           },
         ]);
@@ -95,7 +95,7 @@ function AttendancePage() {
           : "✅ Check-in successful."
       );
 
-      setIdentifier("");
+      setParticipantName("");
     } finally {
       setLoading(false);
     }
@@ -122,21 +122,21 @@ function AttendancePage() {
   }
 
   // ===============================
-  // UI UTAMA
+  // UI
   // ===============================
   return (
     <div style={{ padding: 30, maxWidth: 420 }}>
       <h3>📍 Event Check-in</h3>
 
       <p>
-        Please enter your <b>Identifier</b>
+        Please enter your <b>Name</b>
       </p>
 
       <input
         type="text"
-        placeholder="Enter ID / IC / Staff ID"
-        value={identifier}
-        onChange={(e) => setIdentifier(e.target.value)}
+        placeholder="Enter your name"
+        value={participantName}
+        onChange={(e) => setParticipantName(e.target.value)}
         style={{
           width: "100%",
           padding: 10,
