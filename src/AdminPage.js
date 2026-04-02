@@ -39,6 +39,10 @@ function AdminPage({ staffName, logout }) {
   const [sessions, setSessions] = useState([]);
   const [sessionId, setSessionId] = useState(null);
 
+  const [startTime, setStartTime] = useState("");
+  const [lateAfter, setLateAfter] = useState("");
+  const [endTime, setEndTime] = useState("");
+
   // ===============================
   // FETCH SESSION HISTORY
   // ===============================
@@ -77,6 +81,37 @@ function AdminPage({ staffName, logout }) {
   }, [sessionId]);
 
   // ===============================
+  // CREATE SESSION
+  // ===============================
+  const createEventSession = async () => {
+    if (!startTime || !lateAfter || !endTime) {
+      alert("Please fill in all fields.");
+      return;
+    }
+
+    try {
+      const { data } = await supabase
+        .from("attendance_sessions")
+        .insert([
+          {
+            class_start_at: startTime,
+            late_after: lateAfter,
+            expires_at: endTime,
+            class_name: "DEFAULT",
+          },
+        ])
+        .select()
+        .single();
+
+      setSessionId(data.id);
+      localStorage.setItem("activeSessionId", data.id);
+
+    } catch {
+      alert("Error creating session");
+    }
+  };
+
+  // ===============================
   // ACCESS CONTROL
   // ===============================
   const isStudentId = /^[A-Z]\d{3,}$/.test(staffName);
@@ -107,11 +142,68 @@ function AdminPage({ staffName, logout }) {
               Create Event
             </div>
 
+            <div style={statCard} onClick={() => setPage("session")}>
+              Generate QR
+            </div>
+
             <div style={statCard} onClick={() => setPage("attendance")}>
               View Records
             </div>
           </div>
         </>
+      )}
+
+      {/* SETUP */}
+      {page === "setup" && (
+        <div>
+          <button onClick={() => setPage("dashboard")}>← Home</button>
+          <SetupEvent staffName={staffName} />
+        </div>
+      )}
+
+      {/* GENERATE QR */}
+      {page === "session" && (
+        <div>
+          <button onClick={() => setPage("dashboard")}>← Back</button>
+
+          <h3>📱 Generate QR</h3>
+
+          <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+            <input type="datetime-local" onChange={(e) => setStartTime(e.target.value)} />
+            <input type="datetime-local" onChange={(e) => setLateAfter(e.target.value)} />
+            <input type="datetime-local" onChange={(e) => setEndTime(e.target.value)} />
+          </div>
+
+          <button onClick={createEventSession}>
+            Generate QR
+          </button>
+
+          {sessionId && (
+            <div style={{ display: "flex", gap: 30, marginTop: 20 }}>
+              
+              {/* QR */}
+              <div style={{
+                background: "#fff",
+                padding: 20,
+                borderRadius: 12,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+              }}>
+                <h4>Scan QR</h4>
+
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${window.location.origin}/attendance?session_id=${sessionId}`}
+                  alt="QR"
+                />
+              </div>
+
+              {/* LIVE LIST */}
+              <div style={{ flex: 1 }}>
+                <AttendanceList sessionId={sessionId} />
+              </div>
+
+            </div>
+          )}
+        </div>
       )}
 
       {/* ATTENDANCE */}
@@ -121,7 +213,6 @@ function AdminPage({ staffName, logout }) {
 
           <h3>Check-in Records</h3>
 
-          {/* SESSION DROPDOWN */}
           <select
             value={sessionId || ""}
             onChange={(e) => setSessionId(e.target.value)}
@@ -141,14 +232,6 @@ function AdminPage({ staffName, logout }) {
           ) : (
             <p>Please select a session.</p>
           )}
-        </div>
-      )}
-
-      {/* SETUP */}
-      {page === "setup" && (
-        <div>
-          <button onClick={() => setPage("dashboard")}>← Home</button>
-          <SetupEvent staffName={staffName} />
         </div>
       )}
     </div>
