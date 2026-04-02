@@ -2,9 +2,8 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
 function SetupEvent({ staffName }) {
-  const [session, setSession] = useState("2025/2026");
-  const [eventCode, setEventCode] = useState("");
-  const [groups, setGroups] = useState("");
+  const [session, setSession] = useState("");
+  const [eventName, setEventName] = useState("");
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -13,14 +12,20 @@ function SetupEvent({ staffName }) {
   // FETCH EVENT LIST
   // ===============================
   const fetchEvents = async () => {
-    if (!staffName || !session) return;
+    if (!staffName) return;
 
-    const { data, error } = await supabase
-      .from("lecturer_courses") // backend kekal
+    let query = supabase
+      .from("lecturer_courses")
       .select("*")
       .ilike("lecturer_name", staffName)
-      .eq("semester", session)
       .order("course_code", { ascending: true });
+
+    // 🔥 filter session hanya kalau ada isi
+    if (session.trim()) {
+      query = query.eq("semester", session);
+    }
+
+    const { data, error } = await query;
 
     if (!error) setEvents(data || []);
   };
@@ -34,57 +39,32 @@ function SetupEvent({ staffName }) {
   // CREATE EVENT
   // ===============================
   const addEvent = async () => {
-    if (!eventCode.trim()) return alert("Please enter Event Code.");
-    if (!session.trim()) return alert("Please enter session.");
-    if (!groups.trim())
-      return alert("Please enter at least one group.");
+    if (!eventName.trim()) return alert("Please enter event name.");
 
     try {
       setLoading(true);
 
-      const { error: courseErr } = await supabase
+      const { error } = await supabase
         .from("lecturer_courses")
         .insert([
           {
             lecturer_name: staffName,
-            course_code: eventCode.trim().toUpperCase(),
-            semester: session.trim(),
+            course_code: eventName.trim().toUpperCase(), // 🔒 mapping
+            semester: session.trim() || null, // optional
           },
         ]);
 
-      if (courseErr) {
-        if (courseErr.code !== "23505") {
-          alert("Failed to create event: " + courseErr.message);
+      if (error) {
+        if (error.code !== "23505") {
+          alert("Failed to create event: " + error.message);
           return;
         }
       }
 
-      const groupArray = groups
-        .split(",")
-        .map((g) => g.trim())
-        .filter(Boolean);
-
-      const rowsToInsert = groupArray.map((grp) => ({
-        course_code: eventCode.trim().toUpperCase(),
-        class_code: grp,
-      }));
-
-      const { error: classErr } = await supabase
-        .from("course_classes")
-        .upsert(rowsToInsert, {
-          onConflict: "course_code,class_code",
-        });
-
-      if (classErr) {
-        alert("Failed to save groups: " + classErr.message);
-        return;
-      }
-
       alert("✅ Event created successfully!");
 
-      setEventCode("");
-      setGroups("");
-
+      setEventName("");
+      setSession("");
       fetchEvents();
     } finally {
       setLoading(false);
@@ -102,7 +82,6 @@ function SetupEvent({ staffName }) {
         Admin creates events.
       </p>
 
-      {/* FORM */}
       <div
         style={{
           border: "1px solid #ddd",
@@ -111,35 +90,23 @@ function SetupEvent({ staffName }) {
           maxWidth: 520,
         }}
       >
-        <label><b>Session</b></label>
+        {/* 🔥 SESSION OPTIONAL */}
+        <label><b>Session (if applicable)</b></label>
         <input
           value={session}
           onChange={(e) => setSession(e.target.value)}
-          placeholder="2025/2026"
+          placeholder="e.g. 2025/2026 or leave blank"
           style={{ width: "100%", padding: 8, marginBottom: 10 }}
         />
 
-        <label><b>Event Code</b></label>
+        {/* 🔥 EVENT NAME */}
+        <label><b>Event Name / Program / Course</b></label>
         <input
-          value={eventCode}
-          onChange={(e) => setEventCode(e.target.value)}
-          placeholder="EVT001"
+          value={eventName}
+          onChange={(e) => setEventName(e.target.value)}
+          placeholder="e.g. Safety Training / DTM10333 / Annual Meeting"
           style={{ width: "100%", padding: 8, marginBottom: 10 }}
         />
-
-        <label><b>Enter Group(s)</b></label>
-        <input
-          value={groups}
-          onChange={(e) =>
-            setGroups(e.target.value.toUpperCase())
-          }
-          placeholder="Example: GroupA or GroupA,GroupB"
-          style={{ width: "100%", padding: 8, marginBottom: 5 }}
-        />
-
-        <p style={{ fontSize: 12, color: "#777" }}>
-          Separate multiple groups with comma (,)
-        </p>
 
         <button
           onClick={addEvent}
@@ -173,7 +140,7 @@ function SetupEvent({ staffName }) {
           >
             <thead>
               <tr>
-                <th>Event Code</th>
+                <th>Event</th>
                 <th>Session</th>
               </tr>
             </thead>
@@ -181,7 +148,7 @@ function SetupEvent({ staffName }) {
               {events.map((e) => (
                 <tr key={e.id}>
                   <td>{e.course_code}</td>
-                  <td>{e.semester}</td>
+                  <td>{e.semester || "-"}</td>
                 </tr>
               ))}
             </tbody>
