@@ -40,7 +40,9 @@ function App() {
   const handleLogout = () => {
     setUserType(null);
     setUserId(null);
-    localStorage.clear();
+   localStorage.removeItem("userType");
+   localStorage.removeItem("userId");
+// ❌ JANGAN remove activeSessionId
     window.location.href = "/";
   };
 
