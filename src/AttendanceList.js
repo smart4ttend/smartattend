@@ -4,6 +4,7 @@ import { supabase } from "./supabase";
 function AttendanceList({ sessionId }) {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [highlightId, setHighlightId] = useState(null);
 
   const thStyle = {
     padding: "12px",
@@ -27,7 +28,6 @@ function AttendanceList({ sessionId }) {
         borderRadius: "20px",
         fontWeight: "600",
         fontSize: "13px",
-        display: "inline-block",
       };
     }
 
@@ -39,7 +39,6 @@ function AttendanceList({ sessionId }) {
         borderRadius: "20px",
         fontWeight: "600",
         fontSize: "13px",
-        display: "inline-block",
       };
     }
 
@@ -49,7 +48,7 @@ function AttendanceList({ sessionId }) {
   const fetchAttendance = useCallback(async () => {
     if (!sessionId) return;
 
-    const { data: attendanceData, error } = await supabase
+    const { data, error } = await supabase
       .from("attendance_records")
       .select("id, student_matric, timestamp, status")
       .eq("session_id", sessionId)
@@ -61,20 +60,29 @@ function AttendanceList({ sessionId }) {
       return;
     }
 
-    const records = attendanceData || [];
+    const records = data || [];
+
+    // 🔥 detect latest row
+    if (records.length > 0 && records[0].id !== highlightId) {
+      setHighlightId(records[0].id);
+
+      // remove highlight after 2s
+      setTimeout(() => {
+        setHighlightId(null);
+      }, 2000);
+    }
 
     const formatted = records.map((r) => ({
       id: r.id,
-      participant_name: r.student_matric, // 🔥 terus guna sebagai nama
+      participant_name: r.student_matric,
       status: r.status,
       checkin_time: r.timestamp,
     }));
 
     setRows(formatted);
     setLoading(false);
-  }, [sessionId]);
+  }, [sessionId, highlightId]);
 
-  // AUTO REFRESH
   useEffect(() => {
     fetchAttendance();
     const interval = setInterval(fetchAttendance, 3000);
@@ -85,6 +93,11 @@ function AttendanceList({ sessionId }) {
 
   return (
     <div style={{ padding: "20px", fontFamily: "Segoe UI, sans-serif" }}>
+      {/* 🔥 COUNTER */}
+      <div style={{ marginBottom: "10px", fontWeight: "600" }}>
+        Total Checked-in: {rows.length}
+      </div>
+
       <h3 style={{ marginBottom: "15px" }}>
         📋 Event Check-in Records
       </h3>
@@ -115,22 +128,35 @@ function AttendanceList({ sessionId }) {
               </tr>
             </thead>
             <tbody>
-              {rows.map((row, index) => (
-                <tr key={row.id} style={{ borderBottom: "1px solid #eee" }}>
-                  <td style={tdStyle}>{index + 1}</td>
-                  <td style={tdStyle}>{row.participant_name}</td>
+              {rows.map((row, index) => {
+                const isHighlighted = row.id === highlightId;
 
-                  <td style={tdStyle}>
-                    <span style={getStatusStyle(row.status)}>
-                      {row.status}
-                    </span>
-                  </td>
+                return (
+                  <tr
+                    key={row.id}
+                    style={{
+                      borderBottom: "1px solid #eee",
+                      backgroundColor: isHighlighted
+                        ? "#d4edda"
+                        : "transparent",
+                      transition: "background-color 0.5s ease",
+                    }}
+                  >
+                    <td style={tdStyle}>{index + 1}</td>
+                    <td style={tdStyle}>{row.participant_name}</td>
 
-                  <td style={tdStyle}>
-                    {new Date(row.checkin_time).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
+                    <td style={tdStyle}>
+                      <span style={getStatusStyle(row.status)}>
+                        {row.status}
+                      </span>
+                    </td>
+
+                    <td style={tdStyle}>
+                      {new Date(row.checkin_time).toLocaleString()}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
