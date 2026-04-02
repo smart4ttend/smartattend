@@ -64,14 +64,19 @@ function AdminPage({ staffName, logout }) {
   }, []);
 
   // ===============================
-  // 🔥 LOAD SAVED SESSION
+  // 🔥 LOAD SAVED SESSION + AUTO PAGE
   // ===============================
   useEffect(() => {
     const savedSession = localStorage.getItem("activeSessionId");
-    console.log("Saved session:", savedSession); // 🔥 DEBUG
-  if (savedSession && savedSession !== "null") {
-  setSessionId(savedSession);
-}
+
+    console.log("Loaded session:", savedSession);
+
+    if (savedSession && savedSession !== "null") {
+      setSessionId(savedSession);
+
+      // 🔥 AUTO MASUK PAGE ATTENDANCE
+      setPage("attendance");
+    }
   }, []);
 
   // ===============================
@@ -129,9 +134,12 @@ function AdminPage({ staffName, logout }) {
         return;
       }
 
-      // ✅ SET + SAVE SESSION
+      // 🔥 SAVE SESSION
       setSessionId(data.id);
       localStorage.setItem("activeSessionId", data.id);
+
+      // 🔥 TERUS BUKA QR PAGE
+      setPage("session");
 
     } catch {
       setErrorMsg("Unexpected error.");
@@ -184,7 +192,6 @@ function AdminPage({ staffName, logout }) {
 
           <h2>📱 QR Check-in</h2>
 
-          {/* EVENT SELECT */}
           <select
             value={eventCode}
             onChange={(e) => setEventCode(e.target.value)}
@@ -198,7 +205,6 @@ function AdminPage({ staffName, logout }) {
             ))}
           </select>
 
-          {/* TIME INPUT */}
           <div style={{ display: "flex", gap: "10px", marginBottom: 10 }}>
             <input type="datetime-local" onChange={(e) => setStartTime(e.target.value)} />
             <input type="datetime-local" onChange={(e) => setLateAfter(e.target.value)} />
@@ -211,11 +217,8 @@ function AdminPage({ staffName, logout }) {
 
           {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
 
-          {/* QR + LIST */}
           {sessionId && (
             <div style={{ display: "flex", gap: "30px", marginTop: 20 }}>
-              
-              {/* QR */}
               <div style={{
                 background: "#fff",
                 padding: 20,
@@ -232,11 +235,9 @@ function AdminPage({ staffName, logout }) {
                 <p>Event: <b>{eventCode}</b></p>
               </div>
 
-              {/* LIVE LIST */}
               <div style={{ flex: 1 }}>
                 <AttendanceList sessionId={sessionId} />
               </div>
-
             </div>
           )}
         </div>
