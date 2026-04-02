@@ -36,48 +36,45 @@ const statCard = {
 function AdminPage({ staffName, logout }) {
   const [page, setPage] = useState("dashboard");
 
-  const [eventCode, setEventCode] = useState("");
-  const [events, setEvents] = useState([]);
-
-  const [startTime, setStartTime] = useState("");
-  const [lateAfter, setLateAfter] = useState("");
-  const [endTime, setEndTime] = useState("");
-
+  const [sessions, setSessions] = useState([]);
   const [sessionId, setSessionId] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
 
   // ===============================
-  // FETCH EVENTS
+  // FETCH SESSION HISTORY
   // ===============================
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchSessions = async () => {
       const { data } = await supabase
-        .from("lecturer_courses")
+        .from("attendance_sessions")
         .select("*")
-        .order("course_code");
+        .order("id", { ascending: false });
 
-      setEvents(data || []);
+      setSessions(data || []);
     };
 
-    fetchEvents();
+    fetchSessions();
   }, []);
 
   // ===============================
-  // 🔥 LOAD SAVED SESSION + AUTO PAGE
+  // LOAD SAVED SESSION
   // ===============================
   useEffect(() => {
     const savedSession = localStorage.getItem("activeSessionId");
 
-    console.log("Loaded session:", savedSession);
-
     if (savedSession && savedSession !== "null") {
       setSessionId(savedSession);
-
-      // 🔥 AUTO MASUK PAGE ATTENDANCE
       setPage("attendance");
     }
   }, []);
+
+  // ===============================
+  // AUTO SAVE SESSION
+  // ===============================
+  useEffect(() => {
+    if (sessionId) {
+      localStorage.setItem("activeSessionId", sessionId);
+    }
+  }, [sessionId]);
 
   // ===============================
   // ACCESS CONTROL
@@ -92,61 +89,6 @@ function AdminPage({ staffName, logout }) {
       </div>
     );
   }
-
-  // ===============================
-  // CREATE EVENT SESSION
-  // ===============================
-  const createEventSession = async () => {
-    if (!eventCode || !startTime || !lateAfter || !endTime) {
-      alert("Please fill in all fields.");
-      return;
-    }
-
-    const start = new Date(startTime);
-    const late = new Date(lateAfter);
-    const end = new Date(endTime);
-
-    if (!(start < late && late < end)) {
-      alert("Invalid time sequence.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setErrorMsg("");
-
-      const { data, error } = await supabase
-        .from("attendance_sessions")
-        .insert([
-          {
-            course_code: eventCode.trim().toUpperCase(),
-            class_start_at: start,
-            late_after: late,
-            expires_at: end,
-            class_name: "DEFAULT",
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) {
-        setErrorMsg(error.message);
-        return;
-      }
-
-      // 🔥 SAVE SESSION
-      setSessionId(data.id);
-      localStorage.setItem("activeSessionId", data.id);
-
-      // 🔥 TERUS BUKA QR PAGE
-      setPage("session");
-
-    } catch {
-      setErrorMsg("Unexpected error.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div style={container}>
@@ -165,82 +107,11 @@ function AdminPage({ staffName, logout }) {
               Create Event
             </div>
 
-            <div style={statCard} onClick={() => setPage("session")}>
-              Generate QR
-            </div>
-
             <div style={statCard} onClick={() => setPage("attendance")}>
               View Records
             </div>
           </div>
         </>
-      )}
-
-      {/* SETUP */}
-      {page === "setup" && (
-        <div>
-          <button onClick={() => setPage("dashboard")}>← Home</button>
-          <h2>Event Setup</h2>
-          <SetupEvent staffName={staffName} />
-        </div>
-      )}
-
-      {/* QR SESSION */}
-      {page === "session" && (
-        <div>
-          <button onClick={() => setPage("dashboard")}>← Back</button>
-
-          <h2>📱 QR Check-in</h2>
-
-          <select
-            value={eventCode}
-            onChange={(e) => setEventCode(e.target.value)}
-            style={{ padding: 8, marginBottom: 10 }}
-          >
-            <option value="">Select Event</option>
-            {events.map((e) => (
-              <option key={e.id} value={e.course_code}>
-                {e.course_code}
-              </option>
-            ))}
-          </select>
-
-          <div style={{ display: "flex", gap: "10px", marginBottom: 10 }}>
-            <input type="datetime-local" onChange={(e) => setStartTime(e.target.value)} />
-            <input type="datetime-local" onChange={(e) => setLateAfter(e.target.value)} />
-            <input type="datetime-local" onChange={(e) => setEndTime(e.target.value)} />
-          </div>
-
-          <button onClick={createEventSession}>
-            {loading ? "Creating..." : "Generate QR"}
-          </button>
-
-          {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
-
-          {sessionId && (
-            <div style={{ display: "flex", gap: "30px", marginTop: 20 }}>
-              <div style={{
-                background: "#fff",
-                padding: 20,
-                borderRadius: 12,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-              }}>
-                <h4>Scan QR</h4>
-
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${window.location.origin}/attendance?session_id=${sessionId}`}
-                  alt="QR"
-                />
-
-                <p>Event: <b>{eventCode}</b></p>
-              </div>
-
-              <div style={{ flex: 1 }}>
-                <AttendanceList sessionId={sessionId} />
-              </div>
-            </div>
-          )}
-        </div>
       )}
 
       {/* ATTENDANCE */}
@@ -250,11 +121,34 @@ function AdminPage({ staffName, logout }) {
 
           <h3>Check-in Records</h3>
 
+          {/* SESSION DROPDOWN */}
+          <select
+            value={sessionId || ""}
+            onChange={(e) => setSessionId(e.target.value)}
+            style={{ padding: 8, marginBottom: 15 }}
+          >
+            <option value="">Select Session</option>
+
+            {sessions.map((s) => (
+              <option key={s.id} value={s.id}>
+                Session {s.id} | {new Date(s.class_start_at).toLocaleString()}
+              </option>
+            ))}
+          </select>
+
           {sessionId ? (
             <AttendanceList sessionId={sessionId} />
           ) : (
-            <p>No active event session.</p>
+            <p>Please select a session.</p>
           )}
+        </div>
+      )}
+
+      {/* SETUP */}
+      {page === "setup" && (
+        <div>
+          <button onClick={() => setPage("dashboard")}>← Home</button>
+          <SetupEvent staffName={staffName} />
         </div>
       )}
     </div>
