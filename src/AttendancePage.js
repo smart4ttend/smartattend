@@ -3,63 +3,62 @@ import { supabase } from "./supabase";
 
 function AttendancePage() {
   const params = new URLSearchParams(window.location.search);
-  const sessionId = params.get("session_id");
+  const sessionId = params.get("session_id"); // backend masih guna session_id
 
-  const [studentMatric, setStudentMatric] = useState("");
-  const [session, setSession] = useState(null);
+  const [identifier, setIdentifier] = useState("");
+  const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   // ===============================
-  // 1️⃣ AMBIL DATA SESSION (MASA)
+  // 1️⃣ FETCH EVENT (MASA)
   // ===============================
   useEffect(() => {
     if (!sessionId) {
-      setErrorMsg("Session tidak sah. Sila scan QR yang betul.");
+      setErrorMsg("Invalid event. Please scan a valid QR code.");
       return;
     }
 
-    const fetchSession = async () => {
+    const fetchEvent = async () => {
       const { data, error } = await supabase
-        .from("attendance_sessions")
+        .from("attendance_sessions") // backend kekal
         .select("class_start_at, late_after, expires_at")
         .eq("id", sessionId)
         .single();
 
       if (error || !data) {
-        setErrorMsg("Session tidak dijumpai.");
+        setErrorMsg("Event not found.");
         return;
       }
 
-      setSession(data);
+      setEvent(data);
     };
 
-    fetchSession();
+    fetchEvent();
   }, [sessionId]);
 
   // ===============================
-  // 2️⃣ SUBMIT KEHADIRAN
+  // 2️⃣ SUBMIT CHECK-IN
   // ===============================
-  const submitAttendance = async () => {
-    if (!studentMatric.trim()) {
-      alert("Sila masukkan No Matriks");
+  const submitCheckin = async () => {
+    if (!identifier.trim()) {
+      alert("Please enter your identifier");
       return;
     }
 
-    if (!session) {
-      alert("Session tidak sah");
+    if (!event) {
+      alert("Invalid event");
       return;
     }
 
-    // Tentukan status berdasarkan masa
     const now = new Date();
-    const expiresAt = new Date(session.expires_at);
-    const lateAfter = session.late_after
-      ? new Date(session.late_after)
+    const expiresAt = new Date(event.expires_at);
+    const lateAfter = event.late_after
+      ? new Date(event.late_after)
       : null;
 
     if (now > expiresAt) {
-      alert("❌ Sesi ini telah tamat. Kehadiran ditolak.");
+      alert("❌ This event has ended. Check-in rejected.");
       return;
     }
 
@@ -75,29 +74,28 @@ function AttendancePage() {
         .from("attendance_records")
         .insert([
           {
-            session_id: sessionId,
-            student_matric: studentMatric.trim(),
-            status, // 🔥 HADIR / LAMBAT
+            session_id: sessionId, // backend kekal
+            student_matric: identifier.trim(), // mapping sahaja
+            status,
           },
         ]);
 
       if (error) {
-        // Duplicate (unique constraint)
         if (error.code === "23505") {
-          alert("❌ Anda telah merekod kehadiran untuk sesi ini.");
+          alert("❌ You have already checked in for this event.");
         } else {
-          alert("❌ Rekod gagal: " + error.message);
+          alert("❌ Failed: " + error.message);
         }
         return;
       }
 
       alert(
         status === "LAMBAT"
-          ? "⚠️ Kehadiran direkod sebagai LAMBAT."
-          : "✅ Kehadiran berjaya direkod."
+          ? "⚠️ Check-in recorded as LATE."
+          : "✅ Check-in successful."
       );
 
-      setStudentMatric("");
+      setIdentifier("");
     } finally {
       setLoading(false);
     }
@@ -109,16 +107,16 @@ function AttendancePage() {
   if (errorMsg) {
     return (
       <div style={{ padding: 30 }}>
-        <h3>❌ Ralat</h3>
+        <h3>❌ Error</h3>
         <p>{errorMsg}</p>
       </div>
     );
   }
 
-  if (!session) {
+  if (!event) {
     return (
       <div style={{ padding: 30 }}>
-        <p>Memuatkan sesi...</p>
+        <p>Loading event...</p>
       </div>
     );
   }
@@ -128,33 +126,41 @@ function AttendancePage() {
   // ===============================
   return (
     <div style={{ padding: 30, maxWidth: 420 }}>
-      <h3>Rekod Kehadiran</h3>
+      <h3>📍 Event Check-in</h3>
 
       <p>
-        Sila masukkan <b>No Matriks</b>.
+        Please enter your <b>Identifier</b>
       </p>
 
       <input
         type="text"
-        placeholder="No Matriks"
-        value={studentMatric}
-        onChange={(e) => setStudentMatric(e.target.value)}
-        style={{ width: "100%", padding: 8, marginBottom: 12 }}
-      />
-
-      <button
-        onClick={submitAttendance}
-        disabled={loading}
+        placeholder="Enter ID / IC / Staff ID"
+        value={identifier}
+        onChange={(e) => setIdentifier(e.target.value)}
         style={{
           width: "100%",
           padding: 10,
+          marginBottom: 12,
+          borderRadius: 6,
+          border: "1px solid #ccc",
+        }}
+      />
+
+      <button
+        onClick={submitCheckin}
+        disabled={loading}
+        style={{
+          width: "100%",
+          padding: 12,
           background: "#1976d2",
           color: "#fff",
           border: "none",
+          borderRadius: 6,
           cursor: "pointer",
+          fontWeight: "600",
         }}
       >
-        {loading ? "Merekod..." : "Hadir"}
+        {loading ? "Checking in..." : "Check-in"}
       </button>
     </div>
   );
