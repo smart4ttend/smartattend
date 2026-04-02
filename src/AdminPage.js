@@ -68,6 +68,7 @@ function AdminPage({ staffName, logout }) {
   // ===============================
   useEffect(() => {
     const savedSession = localStorage.getItem("activeSessionId");
+    console.log("Saved session:", savedSession); // 🔥 DEBUG
     if (savedSession) {
       setSessionId(savedSession);
     }
