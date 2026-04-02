@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "./supabase";
 import AttendanceList from "./AttendanceList";
 import SetupEvent from "./SetupEvent";
@@ -29,33 +29,39 @@ const statCard = {
   borderRadius: "12px",
   boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
   cursor: "pointer",
-};
-
-const cardTitle = {
-  fontSize: "13px",
-  color: "#777",
-};
-
-const cardValue = {
-  fontSize: "20px",
+  textAlign: "center",
   fontWeight: "600",
 };
 
 function AdminPage({ staffName, logout }) {
   const [page, setPage] = useState("dashboard");
-  
 
   const [eventCode, setEventCode] = useState("");
+  const [events, setEvents] = useState([]);
+
   const [startTime, setStartTime] = useState("");
   const [lateAfter, setLateAfter] = useState("");
   const [endTime, setEndTime] = useState("");
 
   const [sessionId, setSessionId] = useState(null);
-
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const [selectedGroup, setSelectedGroup] = useState("");
+  // ===============================
+  // FETCH EVENTS
+  // ===============================
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const { data } = await supabase
+        .from("lecturer_courses")
+        .select("*")
+        .order("course_code");
+
+      setEvents(data || []);
+    };
+
+    fetchEvents();
+  }, []);
 
   // ===============================
   // ACCESS CONTROL
@@ -70,32 +76,6 @@ function AdminPage({ staffName, logout }) {
       </div>
     );
   }
-
-  // ===============================
-  // DELETE BY GROUP (backend still class)
-  // ===============================
-  const deleteByGroup = async () => {
-    if (!selectedGroup) {
-      alert("Please enter group name");
-      return;
-    }
-
-    const confirmDelete = window.confirm(
-      `Delete all participants from ${selectedGroup}?`
-    );
-    if (!confirmDelete) return;
-
-    const { error } = await supabase
-      .from("students") // 🔒 kekal
-      .delete()
-      .eq("class_name", selectedGroup);
-
-    if (error) {
-      alert("Delete failed: " + error.message);
-    } else {
-      alert("Participants deleted successfully!");
-    }
-  };
 
   // ===============================
   // CREATE EVENT SESSION
@@ -123,11 +103,11 @@ function AdminPage({ staffName, logout }) {
         .from("attendance_sessions")
         .insert([
           {
-            course_code: eventCode.trim().toUpperCase(), // 🔒 mapping
+            course_code: eventCode.trim().toUpperCase(),
             class_start_at: start,
             late_after: late,
             expires_at: end,
-            class_name: "GROUP", // boleh improve later
+            class_name: "DEFAULT",
           },
         ])
         .select()
@@ -160,18 +140,15 @@ function AdminPage({ staffName, logout }) {
 
           <div style={cardGrid}>
             <div style={statCard} onClick={() => setPage("setup")}>
-              <div style={cardTitle}>Event Setup</div>
-              <div style={cardValue}>Create Event</div>
+              Create Event
             </div>
 
             <div style={statCard} onClick={() => setPage("session")}>
-              <div style={cardTitle}>QR Check-in</div>
-              <div style={cardValue}>Generate QR</div>
+              Generate QR
             </div>
 
             <div style={statCard} onClick={() => setPage("attendance")}>
-              <div style={cardTitle}>Records</div>
-              <div style={cardValue}>View Check-ins</div>
+              View Records
             </div>
           </div>
         </>
@@ -181,36 +158,91 @@ function AdminPage({ staffName, logout }) {
       {page === "setup" && (
         <div>
           <button onClick={() => setPage("dashboard")}>← Home</button>
-
-          <h1>Event Setup</h1>
-
+          <h2>Event Setup</h2>
           <SetupEvent staffName={staffName} />
         </div>
       )}
 
-      {/* SESSION */}
+      {/* QR SESSION */}
       {page === "session" && (
         <div>
           <button onClick={() => setPage("dashboard")}>← Back</button>
 
-          <h3>Create Event Session</h3>
+          <h2>📱 QR Check-in</h2>
 
-          <input
-            placeholder="Event Code"
+          {/* EVENT SELECT */}
+          <select
             value={eventCode}
             onChange={(e) => setEventCode(e.target.value)}
-          />
+            style={{ padding: 8, marginBottom: 10 }}
+          >
+            <option value="">Select Event</option>
+            {events.map((e) => (
+              <option key={e.id} value={e.course_code}>
+                {e.course_code}
+              </option>
+            ))}
+          </select>
 
-          <input type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-          <input type="datetime-local" value={lateAfter} onChange={(e) => setLateAfter(e.target.value)} />
-          <input type="datetime-local" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+          {/* TIME INPUT */}
+          <div style={{ display: "flex", gap: "10px", marginBottom: 10 }}>
+            <input
+              type="datetime-local"
+              onChange={(e) => setStartTime(e.target.value)}
+            />
+            <input
+              type="datetime-local"
+              onChange={(e) => setLateAfter(e.target.value)}
+            />
+            <input
+              type="datetime-local"
+              onChange={(e) => setEndTime(e.target.value)}
+            />
+          </div>
 
           <button onClick={createEventSession}>
-            {loading ? "Creating..." : "Generate QR Session"}
+            {loading ? "Creating..." : "Generate QR"}
           </button>
 
           {errorMsg && <p style={{ color: "red" }}>{errorMsg}</p>}
-          {sessionId && <AttendanceList sessionId={sessionId} />}
+
+          {/* QR + LIST */}
+          {sessionId && (
+            <div
+              style={{
+                display: "flex",
+                gap: "30px",
+                marginTop: 20,
+                alignItems: "flex-start",
+              }}
+            >
+              {/* QR */}
+              <div
+                style={{
+                  background: "#fff",
+                  padding: 20,
+                  borderRadius: 12,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                }}
+              >
+                <h4>Scan QR</h4>
+
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${window.location.origin}/attendance?session_id=${sessionId}`}
+                  alt="QR"
+                />
+
+                <p>
+                  Event: <b>{eventCode}</b>
+                </p>
+              </div>
+
+              {/* LIVE LIST */}
+              <div style={{ flex: 1 }}>
+                <AttendanceList sessionId={sessionId} />
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -220,18 +252,6 @@ function AdminPage({ staffName, logout }) {
           <button onClick={() => setPage("dashboard")}>← Back</button>
 
           <h3>Check-in Records</h3>
-
-          <input
-            placeholder="Enter Group"
-            value={selectedGroup}
-            onChange={(e) =>
-              setSelectedGroup(e.target.value.toUpperCase())
-            }
-          />
-
-          <button onClick={deleteByGroup}>
-            Delete by Group
-          </button>
 
           {sessionId ? (
             <AttendanceList sessionId={sessionId} />
