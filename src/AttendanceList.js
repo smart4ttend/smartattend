@@ -49,14 +49,13 @@ function AttendanceList({ sessionId }) {
   const fetchAttendance = useCallback(async () => {
     if (!sessionId) return;
 
-    // 🔥 Backend masih sama (attendance_records)
-    const { data: attendanceData, error: aErr } = await supabase
+    const { data: attendanceData, error } = await supabase
       .from("attendance_records")
       .select("id, student_matric, timestamp, status")
       .eq("session_id", sessionId)
       .order("timestamp", { ascending: false });
 
-    if (aErr) {
+    if (error) {
       setRows([]);
       setLoading(false);
       return;
@@ -64,35 +63,14 @@ function AttendanceList({ sessionId }) {
 
     const records = attendanceData || [];
 
-    if (records.length === 0) {
-      setRows([]);
-      setLoading(false);
-      return;
-    }
-
-    // 🔥 Ambil nama dari students (backend kekal)
-    const matricList = [...new Set(records.map((r) => r.student_matric))];
-
-    const { data: studentsData } = await supabase
-      .from("students")
-      .select("matric_no, name")
-      .in("matric_no", matricList);
-
-    const mapName = {};
-    (studentsData || []).forEach((s) => {
-      mapName[s.matric_no] = s.name;
-    });
-
-    // 🔥 MAP ke PARTICIPANT (frontend only)
-    const merged = records.map((r) => ({
+    const formatted = records.map((r) => ({
       id: r.id,
-      participant_name: mapName[r.student_matric] || "-",
-      identifier: r.student_matric,
+      participant_name: r.student_matric, // 🔥 terus guna sebagai nama
       status: r.status,
       checkin_time: r.timestamp,
     }));
 
-    setRows(merged);
+    setRows(formatted);
     setLoading(false);
   }, [sessionId]);
 
@@ -107,7 +85,6 @@ function AttendanceList({ sessionId }) {
 
   return (
     <div style={{ padding: "20px", fontFamily: "Segoe UI, sans-serif" }}>
-      {/* 🔥 TITLE REBRAND */}
       <h3 style={{ marginBottom: "15px" }}>
         📋 Event Check-in Records
       </h3>
@@ -133,7 +110,6 @@ function AttendanceList({ sessionId }) {
               <tr style={{ backgroundColor: "#f4f6f8", textAlign: "left" }}>
                 <th style={thStyle}>No</th>
                 <th style={thStyle}>Participant Name</th>
-                <th style={thStyle}>Identifier</th>
                 <th style={thStyle}>Status</th>
                 <th style={thStyle}>Check-in Time</th>
               </tr>
@@ -143,7 +119,6 @@ function AttendanceList({ sessionId }) {
                 <tr key={row.id} style={{ borderBottom: "1px solid #eee" }}>
                   <td style={tdStyle}>{index + 1}</td>
                   <td style={tdStyle}>{row.participant_name}</td>
-                  <td style={tdStyle}>{row.identifier}</td>
 
                   <td style={tdStyle}>
                     <span style={getStatusStyle(row.status)}>
