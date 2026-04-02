@@ -7,16 +7,14 @@ function LoginPage({ onLogin, onRegister }) {
 
   const handleLogin = async () => {
     if (!userId.trim()) {
-      alert("Sila masukkan ID pensyarah");
+      alert("Please enter Admin ID");
       return;
     }
 
     const idTrim = userId.trim().toUpperCase();
     setLoading(true);
 
-    // =====================
-    // LOGIN STAFF SAHAJA
-    // =====================
+    // 🔒 Backend kekal (staff table)
     const { data, error } = await supabase
       .from("staff")
       .select("name")
@@ -26,96 +24,97 @@ function LoginPage({ onLogin, onRegister }) {
     setLoading(false);
 
     if (error) {
-      alert("Error sistem: " + error.message);
+      alert("System error: " + error.message);
       return;
     }
 
     if (!data || data.length === 0) {
-      alert("❌ ID pensyarah tidak sah");
+      alert("❌ Invalid Admin ID");
       return;
     }
 
-    // ✅ LOGIN BERJAYA
-    onLogin("staff", data[0].name);
+    // ✅ LOGIN SUCCESS
+    onLogin("admin", data[0].name); // tukar role frontend sahaja
   };
 
-return (
-  <div
-    style={{
-      height: "100vh",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      background: "linear-gradient(135deg, #4f8cff, #6ed0f6)",
-      fontFamily: "Segoe UI, sans-serif",
-    }}
-  >
+  return (
     <div
       style={{
-        background: "#fff",
-        padding: "40px",
-        borderRadius: "16px",
-        width: "320px",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
-        textAlign: "center",
+        height: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        background: "linear-gradient(135deg, #4f8cff, #6ed0f6)",
+        fontFamily: "Segoe UI, sans-serif",
       }}
     >
-      <h2 style={{ marginBottom: "10px" }}>🎓 SmartAttend</h2>
-
-      <p style={{ marginBottom: "20px", color: "#666" }}>
-        Login Pensyarah
-      </p>
-
-      <input
-        type="text"
-        placeholder="Masukkan ID Pensyarah"
-        value={userId}
-        onChange={(e) => setUserId(e.target.value)}
+      <div
         style={{
-          width: "100%",
-          padding: "10px",
-          borderRadius: "8px",
-          border: "1px solid #ddd",
-          marginBottom: "15px",
-          outline: "none",
-        }}
-      />
-
-      <button
-        onClick={handleLogin}
-        disabled={loading}
-        onMouseOver={(e) => (e.target.style.background = "#3a73e0")}
-        onMouseOut={(e) => (e.target.style.background = "#4f8cff")}
-        style={{
-          width: "100%",
-          padding: "10px",
-          borderRadius: "8px",
-          border: "none",
-          background: "#4f8cff",
-          color: "#fff",
-          fontWeight: "600",
-          cursor: "pointer",
+          background: "#fff",
+          padding: "40px",
+          borderRadius: "16px",
+          width: "320px",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+          textAlign: "center",
         }}
       >
-        {loading ? "Checking..." : "Login"}
-      </button>
+        {/* 🔥 REBRAND TITLE */}
+        <h2 style={{ marginBottom: "10px" }}>🚀 Check-in System</h2>
 
-      <button
-        onClick={onRegister}
-        style={{
-          marginTop: "12px",
-          background: "none",
-          border: "none",
-          color: "#4f8cff",
-          cursor: "pointer",
-          fontSize: "13px",
-        }}
-      >
-        Daftar Pensyarah
-      </button>
+        <p style={{ marginBottom: "20px", color: "#666" }}>
+          Admin Login
+        </p>
+
+        <input
+          type="text"
+          placeholder="Enter Admin ID"
+          value={userId}
+          onChange={(e) => setUserId(e.target.value)}
+          style={{
+            width: "100%",
+            padding: "10px",
+            borderRadius: "8px",
+            border: "1px solid #ddd",
+            marginBottom: "15px",
+            outline: "none",
+          }}
+        />
+
+        <button
+          onClick={handleLogin}
+          disabled={loading}
+          onMouseOver={(e) => (e.target.style.background = "#3a73e0")}
+          onMouseOut={(e) => (e.target.style.background = "#4f8cff")}
+          style={{
+            width: "100%",
+            padding: "10px",
+            borderRadius: "8px",
+            border: "none",
+            background: "#4f8cff",
+            color: "#fff",
+            fontWeight: "600",
+            cursor: "pointer",
+          }}
+        >
+          {loading ? "Checking..." : "Login"}
+        </button>
+
+        <button
+          onClick={onRegister}
+          style={{
+            marginTop: "12px",
+            background: "none",
+            border: "none",
+            color: "#4f8cff",
+            cursor: "pointer",
+            fontSize: "13px",
+          }}
+        >
+          Register Admin
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
 }
 
 export default LoginPage;
