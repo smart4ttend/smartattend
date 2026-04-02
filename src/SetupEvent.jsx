@@ -2,23 +2,21 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
 function SetupEvent({ staffName }) {
-  const [session, setSession] = useState("2025/2026"); // semester → session
-  const [eventCode, setEventCode] = useState(""); // courseCode → eventCode
-  const [groups, setGroups] = useState(""); // classes → groups
+  const [session, setSession] = useState("2025/2026");
+  const [eventCode, setEventCode] = useState("");
+  const [groups, setGroups] = useState("");
 
-  const [events, setEvents] = useState([]); // courses → events
+  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [activeEvent, setActiveEvent] = useState(null);
-
   // ===============================
-  // FETCH EVENT LIST (backend masih lecturer_courses)
+  // FETCH EVENT LIST
   // ===============================
   const fetchEvents = async () => {
     if (!staffName || !session) return;
 
     const { data, error } = await supabase
-      .from("lecturer_courses") // 🔒 kekal
+      .from("lecturer_courses") // backend kekal
       .select("*")
       .ilike("lecturer_name", staffName)
       .eq("semester", session)
@@ -33,7 +31,7 @@ function SetupEvent({ staffName }) {
   }, [session, staffName]);
 
   // ===============================
-  // ADD EVENT (backend masih course)
+  // CREATE EVENT
   // ===============================
   const addEvent = async () => {
     if (!eventCode.trim()) return alert("Please enter Event Code.");
@@ -49,7 +47,7 @@ function SetupEvent({ staffName }) {
         .insert([
           {
             lecturer_name: staffName,
-            course_code: eventCode.trim().toUpperCase(), // mapping sahaja
+            course_code: eventCode.trim().toUpperCase(),
             semester: session.trim(),
           },
         ]);
@@ -94,46 +92,6 @@ function SetupEvent({ staffName }) {
   };
 
   // ===============================
-  // CSV UPLOAD (Participant)
-  // ===============================
-  const handleFileUpload = async (e) => {
-    if (!activeEvent) {
-      alert("Please select an event first");
-      return;
-    }
-
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      const rows = text.split("\n").slice(1);
-
-      const participants = rows
-        .map((row) => {
-          const [id, name, group] = row.split(",");
-          return {
-            matric_no: id?.trim(), // 🔒 backend kekal
-            name: name?.trim(),
-            class_name: group?.trim(),
-            course_code: activeEvent,
-          };
-        })
-        .filter((p) => p.matric_no && p.name);
-
-      const { error } = await supabase.from("students").insert(participants);
-
-      if (error) {
-        alert("Upload failed: " + error.message);
-      } else {
-        alert(`Participants uploaded for ${activeEvent}`);
-      }
-    } catch (err) {
-      alert("Error reading CSV file");
-    }
-  };
-
-  // ===============================
   // UI
   // ===============================
   return (
@@ -141,7 +99,7 @@ function SetupEvent({ staffName }) {
       <h3>📅 Event Setup</h3>
 
       <p style={{ color: "#555" }}>
-        Admin creates events and uploads participant list.
+        Admin creates events.
       </p>
 
       {/* FORM */}
@@ -217,7 +175,6 @@ function SetupEvent({ staffName }) {
               <tr>
                 <th>Event Code</th>
                 <th>Session</th>
-                <th>Action</th>
               </tr>
             </thead>
             <tbody>
@@ -225,48 +182,12 @@ function SetupEvent({ staffName }) {
                 <tr key={e.id}>
                   <td>{e.course_code}</td>
                   <td>{e.semester}</td>
-                  <td>
-                    <button
-                      onClick={() => setActiveEvent(e.course_code)}
-                      style={{
-                        padding: "6px 12px",
-                        background: "#4f8cff",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Upload Participant List
-                    </button>
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
       </div>
-
-      {/* UPLOAD */}
-      {activeEvent && (
-        <div
-          style={{
-            marginTop: 20,
-            padding: 15,
-            background: "#fff",
-            borderRadius: 10,
-            boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-            maxWidth: 400,
-          }}
-        >
-          <h4>Upload Participant List (CSV)</h4>
-          <p style={{ fontSize: 13 }}>
-            Event: <b>{activeEvent}</b>
-          </p>
-
-          <input type="file" accept=".csv" onChange={handleFileUpload} />
-        </div>
-      )}
     </div>
   );
 }
