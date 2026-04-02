@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from "react";
 import LoginPage from "./LoginPage";
-import StaffPage from "./StaffPage";
+import AdminPage from "./AdminPage"; // 🔥 tukar sini
 import AttendancePage from "./AttendancePage";
-import RegisterPage from "./RegisterPage"; // ✅ TAMBAH
+import RegisterPage from "./RegisterPage";
 
 function App() {
   const [userType, setUserType] = useState(null);
   const [userId, setUserId] = useState(null);
-
-  const [page, setPage] = useState("login"); // ✅ TAMBAH
+  const [page, setPage] = useState("login");
 
   // ===============================
-  // 1️⃣ CHECK URL DULU (PENTING)
+  // 1️⃣ CHECK URL (QR CHECK-IN)
   // ===============================
   const isAttendancePage =
     window.location.pathname === "/attendance";
@@ -49,14 +48,19 @@ function App() {
   // 3️⃣ ROUTING LOGIC
   // ===============================
 
-  // 🎓 PELAJAR SCAN QR (TANPA LOGIN)
+  // 📍 PARTICIPANT CHECK-IN (NO LOGIN)
   if (isAttendancePage) {
     return <AttendancePage />;
   }
 
-  // 🧑‍🏫 STAFF LOGIN SUCCESS
-  if (userType === "staff") {
-    return <StaffPage staffName={userId} logout={handleLogout} />;
+  // 🔐 ADMIN LOGIN SUCCESS
+  if (userType === "admin") {
+    return (
+      <AdminPage
+        staffName={userId} // backend masih guna staffName
+        logout={handleLogout}
+      />
+    );
   }
 
   // 🆕 REGISTER PAGE
@@ -68,11 +72,11 @@ function App() {
     );
   }
 
-  // 🔐 LOGIN PAGE (DEFAULT)
+  // 🔐 LOGIN PAGE
   return (
     <LoginPage
       onLogin={handleLogin}
-      onRegister={() => setPage("register")} // ✅ TAMBAH
+      onRegister={() => setPage("register")}
     />
   );
 }
