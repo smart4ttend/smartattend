@@ -45,6 +45,39 @@ function AttendanceList({ sessionId }) {
     return {};
   };
 
+  // ===============================
+  // 🔥 EXPORT CSV
+  // ===============================
+  const exportToCSV = () => {
+    if (rows.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const headers = ["No", "Participant Name", "Status", "Check-in Time"];
+
+    const csvRows = rows.map((row, index) => [
+      index + 1,
+      row.participant_name,
+      row.status,
+      new Date(row.checkin_time).toLocaleString(),
+    ]);
+
+    const csvContent =
+      [headers, ...csvRows]
+        .map((e) => e.join(","))
+        .join("\n");
+
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `attendance_${sessionId}.csv`;
+    link.click();
+  };
+
   const fetchAttendance = useCallback(async () => {
     if (!sessionId) return;
 
@@ -62,11 +95,10 @@ function AttendanceList({ sessionId }) {
 
     const records = data || [];
 
-    // 🔥 detect latest row
+    // 🔥 highlight latest
     if (records.length > 0 && records[0].id !== highlightId) {
       setHighlightId(records[0].id);
 
-      // remove highlight after 2s
       setTimeout(() => {
         setHighlightId(null);
       }, 2000);
@@ -93,9 +125,33 @@ function AttendanceList({ sessionId }) {
 
   return (
     <div style={{ padding: "20px", fontFamily: "Segoe UI, sans-serif" }}>
-      {/* 🔥 COUNTER */}
-      <div style={{ marginBottom: "10px", fontWeight: "600" }}>
-        Total Checked-in: {rows.length}
+      {/* 🔥 COUNTER + EXPORT */}
+      <div
+        style={{
+          marginBottom: "10px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <div style={{ fontWeight: "600" }}>
+          Total Checked-in: {rows.length}
+        </div>
+
+        <button
+          onClick={exportToCSV}
+          style={{
+            padding: "8px 12px",
+            background: "#28a745",
+            color: "#fff",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            fontWeight: "600",
+          }}
+        >
+          Export Excel
+        </button>
       </div>
 
       <h3 style={{ marginBottom: "15px" }}>
