@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "./supabase";
 
-function AttendanceList({ sessionId, hideIfExpired = false }){
+function AttendanceList({ sessionId, hideIfExpired = false, currentEventName }){
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [highlightId, setHighlightId] = useState(null);
@@ -45,7 +45,6 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
     return {};
   };
 
-  // 🔥 EXPORT FUNCTION
   const exportToCSV = () => {
     if (rows.length === 0) {
       alert("No data to export.");
@@ -56,9 +55,11 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
 
     const csvRows = rows.map((row, index) => [
       index + 1,
-      row.participant_name,
-      row.status,
-      new Date(row.checkin_time).toLocaleString(),
+      row.participant_name || "-",
+      row.status || "-",
+      row.checkin_time
+        ? new Date(row.checkin_time).toLocaleString()
+        : "-",
     ]);
 
     const csvContent =
@@ -94,11 +95,9 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
 
     const records = data || [];
 
-    // 🔥 detect latest row
     if (records.length > 0 && records[0].id !== highlightId) {
       setHighlightId(records[0].id);
 
-      // remove highlight after 2s
       setTimeout(() => {
         setHighlightId(null);
       }, 2000);
@@ -125,7 +124,6 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
 
   return (
     <div style={{ padding: "20px", fontFamily: "Segoe UI, sans-serif" }}>
-      {/* 🔥 COUNTER */}
       <div style={{ marginBottom: "10px", fontWeight: "600" }}>
         Total Checked-in: {rows.length}
       </div>
@@ -134,8 +132,7 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
         📋 Event Check-in Records
       </h3>
 
-      {/* 🔥 DOWNLOAD BUTTON */}
-      <div style={{ marginBottom: "15px" }}>
+      <div style={{ marginBottom: "10px" }}>
         <button
           onClick={exportToCSV}
           style={{
@@ -151,6 +148,20 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
           ⬇ Download Excel
         </button>
       </div>
+
+      {/* 🔥 TAMBAH NAMA EVENT DI SINI */}
+      <p
+        style={{
+          fontWeight: "600",
+          marginBottom: "15px",
+          background: "#eef2ff",
+          padding: "8px 12px",
+          borderRadius: "8px",
+          display: "inline-block",
+        }}
+      >
+        📌 {currentEventName || "No Event Selected"}
+      </p>
 
       {rows.length === 0 ? (
         <p>No check-in records yet.</p>
@@ -194,16 +205,20 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
                     }}
                   >
                     <td style={tdStyle}>{index + 1}</td>
-                    <td style={tdStyle}>{row.participant_name}</td>
+                    <td style={tdStyle}>
+                      {row.participant_name || "-"}
+                    </td>
 
                     <td style={tdStyle}>
                       <span style={getStatusStyle(row.status)}>
-                        {row.status}
+                        {row.status || "-"}
                       </span>
                     </td>
 
                     <td style={tdStyle}>
-                      {new Date(row.checkin_time).toLocaleString()}
+                      {row.checkin_time
+                        ? new Date(row.checkin_time).toLocaleString()
+                        : "-"}
                     </td>
                   </tr>
                 );
