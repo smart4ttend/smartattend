@@ -24,7 +24,6 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
       return {
         backgroundColor: "#dcfce7",
         color: "#166534",
-        color: "#1e7e34",
         padding: "6px 12px",
         borderRadius: "20px",
         fontWeight: "600",
@@ -36,7 +35,6 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
       return {
         backgroundColor: "#fef3c7",
         color: "#92400e",
-        color: "#cc7a00",
         padding: "6px 12px",
         borderRadius: "20px",
         fontWeight: "600",
