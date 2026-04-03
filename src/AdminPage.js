@@ -228,7 +228,7 @@ function AdminPage({ staffName, logout }) {
           </select>
 
           {sessionId ? (
-            <AttendanceList sessionId={sessionId} />
+            <AttendanceList sessionId={sessionId} hideIfExpired={true} />
           ) : (
             <p>Please select a session.</p>
           )}
