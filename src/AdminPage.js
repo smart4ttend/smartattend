@@ -62,14 +62,37 @@ function AdminPage({ staffName, logout }) {
   // ===============================
   // LOAD SAVED SESSION
   // ===============================
-  useEffect(() => {
+useEffect(() => {
+  const loadSession = async () => {
     const savedSession = localStorage.getItem("activeSessionId");
 
-    if (savedSession && savedSession !== "null") {
+    if (!savedSession || savedSession === "null") return;
+
+    // 🔥 check expired
+    const { data } = await supabase
+      .from("attendance_sessions")
+      .select("expires_at")
+      .eq("id", savedSession)
+      .single();
+
+    if (!data) return;
+
+    const now = new Date();
+    const expired = new Date(data.expires_at);
+
+    if (now > expired) {
+      // ❌ session tamat → clear
+      localStorage.removeItem("activeSessionId");
+      setSessionId(null);
+    } else {
+      // ✅ session masih aktif
       setSessionId(savedSession);
       setPage("attendance");
     }
-  }, []);
+  };
+
+  loadSession();
+}, []);
 
   // ===============================
   // AUTO SAVE SESSION
