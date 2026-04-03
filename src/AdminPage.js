@@ -40,6 +40,9 @@ function AdminPage({ staffName, logout }) {
   const [sessions, setSessions] = useState([]);
   const [isExpired, setIsExpired] = useState(false);
 
+  const [eventName, setEventName] = useState("");
+  const [currentEventName, setCurrentEventName] = useState("");
+
   const [startTime, setStartTime] = useState("");
   const [lateAfter, setLateAfter] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -59,6 +62,27 @@ function AdminPage({ staffName, logout }) {
 
     fetchSessions();
   }, []);
+
+  // ===============================
+  // FETCH EVENT NAME
+  // ===============================
+  useEffect(() => {
+    const fetchEventName = async () => {
+      if (!sessionId) return;
+
+      const { data } = await supabase
+        .from("attendance_sessions")
+        .select("class_name")
+        .eq("id", sessionId)
+        .single();
+
+      if (data) {
+        setCurrentEventName(data.class_name);
+      }
+    };
+
+    fetchEventName();
+  }, [sessionId]);
 
   // ===============================
   // LOAD SAVED SESSION
@@ -104,7 +128,7 @@ function AdminPage({ staffName, logout }) {
   }, [sessionId]);
 
   // ===============================
-  // CHECK EXPIRED REAL-TIME
+  // CHECK EXPIRED
   // ===============================
   useEffect(() => {
     const checkExpired = async () => {
@@ -142,12 +166,8 @@ function AdminPage({ staffName, logout }) {
       return;
     }
 
-    const start = new Date(startTime);
-    const late = new Date(lateAfter);
-    const end = new Date(endTime);
-
-    if (!(start < late && late < end)) {
-      alert("Invalid time sequence.");
+    if (!eventName.trim()) {
+      alert("Please enter Event Name.");
       return;
     }
 
@@ -156,10 +176,10 @@ function AdminPage({ staffName, logout }) {
         .from("attendance_sessions")
         .insert([
           {
-            class_start_at: start.toISOString(),
-            late_after: late.toISOString(),
-            expires_at: end.toISOString(),
-            class_name: "DEFAULT",
+            class_start_at: startTime,
+            late_after: lateAfter,
+            expires_at: endTime,
+            class_name: eventName.trim(),
           },
         ])
         .select()
@@ -168,24 +188,11 @@ function AdminPage({ staffName, logout }) {
       setSessionId(data.id);
       localStorage.setItem("activeSessionId", data.id);
       setIsExpired(false);
+      setEventName("");
     } catch {
       alert("Error creating session");
     }
   };
-
-  // ===============================
-  // ACCESS CONTROL
-  // ===============================
-  const isStudentId = /^[A-Z]\d{3,}$/.test(staffName);
-  if (!staffName || isStudentId) {
-    return (
-      <div style={{ padding: 30 }}>
-        <h3>❌ Access Denied</h3>
-        <p>This page is for admin only.</p>
-        <button onClick={logout}>Logout</button>
-      </div>
-    );
-  }
 
   return (
     <div style={container}>
@@ -214,15 +221,16 @@ function AdminPage({ staffName, logout }) {
           </div>
         </>
       )}
-
-      {/* SETUP */}
+      {/* SETUP EVENT */}
       {page === "setup" && (
         <div>
           <button onClick={() => setPage("dashboard")}>← Home</button>
-          <SetupEvent staffName={staffName} />
-        </div>
-      )}
 
+         <h3 style={{ marginTop: 10 }}>📅 Create Event</h3>
+
+       <SetupEvent staffName={staffName} />
+      </div>
+      )}
       {/* GENERATE QR */}
       {page === "session" && (
         <div>
@@ -230,22 +238,19 @@ function AdminPage({ staffName, logout }) {
 
           <h3>📱 Generate QR</h3>
 
+          {/* 🔥 EVENT NAME INPUT */}
+          <input
+            type="text"
+            placeholder="Event Name / Program"
+            value={eventName}
+            onChange={(e) => setEventName(e.target.value)}
+            style={{ width: "100%", padding: 8, marginBottom: 10 }}
+          />
+
           <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-            <input
-              type="datetime-local"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-            />
-            <input
-              type="datetime-local"
-              value={lateAfter}
-              onChange={(e) => setLateAfter(e.target.value)}
-            />
-            <input
-              type="datetime-local"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-            />
+            <input type="datetime-local" onChange={(e) => setStartTime(e.target.value)} />
+            <input type="datetime-local" onChange={(e) => setLateAfter(e.target.value)} />
+            <input type="datetime-local" onChange={(e) => setEndTime(e.target.value)} />
           </div>
 
           <button onClick={createEventSession}>Generate QR</button>
@@ -258,15 +263,19 @@ function AdminPage({ staffName, logout }) {
 
           {sessionId && !isExpired && (
             <div style={{ display: "flex", gap: 30, marginTop: 20 }}>
-              <div
-                style={{
-                  background: "#fff",
-                  padding: 20,
-                  borderRadius: 12,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                }}
-              >
+              
+              {/* QR SIDE */}
+              <div style={{
+                background: "#fff",
+                padding: 20,
+                borderRadius: 12,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+              }}>
                 <h4>Scan QR</h4>
+
+                <p style={{ fontWeight: "600", marginBottom: 10 }}>
+                  {currentEventName}
+                </p>
 
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${window.location.origin}/attendance?session_id=${sessionId}`}
@@ -274,9 +283,12 @@ function AdminPage({ staffName, logout }) {
                 />
               </div>
 
+              {/* ATTENDANCE SIDE */}
               <div style={{ flex: 1 }}>
+                <h3>📍 {currentEventName}</h3>
                 <AttendanceList sessionId={sessionId} hideIfExpired={true} />
               </div>
+
             </div>
           )}
         </div>
@@ -298,7 +310,7 @@ function AdminPage({ staffName, logout }) {
 
             {sessions.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.course_code || "Event"} -{" "}
+                {s.class_name || "Event"} -{" "}
                 {new Date(s.class_start_at).toLocaleDateString()} (
                 {new Date(s.class_start_at).toLocaleTimeString()})
               </option>
