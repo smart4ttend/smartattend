@@ -36,8 +36,9 @@ const statCard = {
 function AdminPage({ staffName, logout }) {
   const [page, setPage] = useState("dashboard");
 
-  const [sessions, setSessions] = useState([]);
   const [sessionId, setSessionId] = useState(null);
+  const [sessions, setSessions] = useState([]);
+  const [isExpired, setIsExpired] = useState(false);
 
   const [startTime, setStartTime] = useState("");
   const [lateAfter, setLateAfter] = useState("");
@@ -62,37 +63,36 @@ function AdminPage({ staffName, logout }) {
   // ===============================
   // LOAD SAVED SESSION
   // ===============================
-useEffect(() => {
-  const loadSession = async () => {
-    const savedSession = localStorage.getItem("activeSessionId");
+  useEffect(() => {
+    const loadSession = async () => {
+      const savedSession = localStorage.getItem("activeSessionId");
 
-    if (!savedSession || savedSession === "null") return;
+      if (!savedSession || savedSession === "null") return;
 
-    // 🔥 check expired
-    const { data } = await supabase
-      .from("attendance_sessions")
-      .select("expires_at")
-      .eq("id", savedSession)
-      .single();
+      const { data } = await supabase
+        .from("attendance_sessions")
+        .select("expires_at")
+        .eq("id", savedSession)
+        .single();
 
-    if (!data) return;
+      if (!data) return;
 
-    const now = new Date();
-    const expired = new Date(data.expires_at);
+      const now = new Date();
+      const expired = new Date(data.expires_at);
 
-    if (now > expired) {
-      // ❌ session tamat → clear
-      localStorage.removeItem("activeSessionId");
-      setSessionId(null);
-    } else {
-      // ✅ session masih aktif
-      setSessionId(savedSession);
-      setPage("attendance");
-    }
-  };
+      if (now > expired) {
+        localStorage.removeItem("activeSessionId");
+        setSessionId(null);
+        setIsExpired(true);
+      } else {
+        setSessionId(savedSession);
+        setIsExpired(false);
+        setPage("attendance");
+      }
+    };
 
-  loadSession();
-}, []);
+    loadSession();
+  }, []);
 
   // ===============================
   // AUTO SAVE SESSION
@@ -104,6 +104,36 @@ useEffect(() => {
   }, [sessionId]);
 
   // ===============================
+  // CHECK EXPIRED REAL-TIME
+  // ===============================
+  useEffect(() => {
+    const checkExpired = async () => {
+      if (!sessionId) return;
+
+      const { data } = await supabase
+        .from("attendance_sessions")
+        .select("expires_at")
+        .eq("id", sessionId)
+        .single();
+
+      if (data) {
+        const now = new Date();
+        const expired = new Date(data.expires_at);
+
+        if (now > expired) {
+          setIsExpired(true);
+          setSessionId(null);
+          localStorage.removeItem("activeSessionId");
+        } else {
+          setIsExpired(false);
+        }
+      }
+    };
+
+    checkExpired();
+  }, [sessionId]);
+
+  // ===============================
   // CREATE SESSION
   // ===============================
   const createEventSession = async () => {
@@ -112,14 +142,23 @@ useEffect(() => {
       return;
     }
 
+    const start = new Date(startTime);
+    const late = new Date(lateAfter);
+    const end = new Date(endTime);
+
+    if (!(start < late && late < end)) {
+      alert("Invalid time sequence.");
+      return;
+    }
+
     try {
       const { data } = await supabase
         .from("attendance_sessions")
         .insert([
           {
-            class_start_at: startTime,
-            late_after: lateAfter,
-            expires_at: endTime,
+            class_start_at: start.toISOString(),
+            late_after: late.toISOString(),
+            expires_at: end.toISOString(),
             class_name: "DEFAULT",
           },
         ])
@@ -128,7 +167,7 @@ useEffect(() => {
 
       setSessionId(data.id);
       localStorage.setItem("activeSessionId", data.id);
-
+      setIsExpired(false);
     } catch {
       alert("Error creating session");
     }
@@ -192,25 +231,41 @@ useEffect(() => {
           <h3>📱 Generate QR</h3>
 
           <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-            <input type="datetime-local" onChange={(e) => setStartTime(e.target.value)} />
-            <input type="datetime-local" onChange={(e) => setLateAfter(e.target.value)} />
-            <input type="datetime-local" onChange={(e) => setEndTime(e.target.value)} />
+            <input
+              type="datetime-local"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+            />
+            <input
+              type="datetime-local"
+              value={lateAfter}
+              onChange={(e) => setLateAfter(e.target.value)}
+            />
+            <input
+              type="datetime-local"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+            />
           </div>
 
-          <button onClick={createEventSession}>
-            Generate QR
-          </button>
+          <button onClick={createEventSession}>Generate QR</button>
 
-          {sessionId && (
+          {isExpired && (
+            <p style={{ color: "red", marginTop: 10 }}>
+              ⚠️ Session has ended. Please generate a new QR.
+            </p>
+          )}
+
+          {sessionId && !isExpired && (
             <div style={{ display: "flex", gap: 30, marginTop: 20 }}>
-              
-              {/* QR */}
-              <div style={{
-                background: "#fff",
-                padding: 20,
-                borderRadius: 12,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-              }}>
+              <div
+                style={{
+                  background: "#fff",
+                  padding: 20,
+                  borderRadius: 12,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                }}
+              >
                 <h4>Scan QR</h4>
 
                 <img
@@ -219,11 +274,9 @@ useEffect(() => {
                 />
               </div>
 
-              {/* LIVE LIST */}
               <div style={{ flex: 1 }}>
-                <AttendanceList sessionId={sessionId} />
+                <AttendanceList sessionId={sessionId} hideIfExpired={true} />
               </div>
-
             </div>
           )}
         </div>
@@ -238,20 +291,22 @@ useEffect(() => {
 
           <select
             value={sessionId || ""}
-            onChange={(e) => setSessionId(e.target.value)}
+            onChange={(e) => setSessionId(e.target.value || null)}
             style={{ padding: 8, marginBottom: 15 }}
           >
             <option value="">Select Session</option>
 
             {sessions.map((s) => (
               <option key={s.id} value={s.id}>
-                Session {s.id} | {new Date(s.class_start_at).toLocaleString()}
+                {s.course_code || "Event"} -{" "}
+                {new Date(s.class_start_at).toLocaleDateString()} (
+                {new Date(s.class_start_at).toLocaleTimeString()})
               </option>
             ))}
           </select>
 
           {sessionId ? (
-            <AttendanceList sessionId={sessionId} hideIfExpired={true} />
+            <AttendanceList sessionId={sessionId} />
           ) : (
             <p>Please select a session.</p>
           )}
