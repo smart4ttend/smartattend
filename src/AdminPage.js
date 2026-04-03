@@ -298,6 +298,10 @@ function AdminPage({ staffName, logout }) {
 
           <h3>Check-in Records</h3>
 
+<p style={{ fontWeight: "600", marginBottom: "10px" }}>
+  📌 {currentEventName || "No Event Selected"}
+</p>
+
           <select
             value={sessionId || ""}
             onChange={(e) => setSessionId(e.target.value || null)}
