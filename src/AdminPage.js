@@ -308,13 +308,22 @@ function AdminPage({ staffName, logout }) {
           >
             <option value="">Select Session</option>
 
-            {sessions.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.class_name || "Event"} -{" "}
-                {new Date(s.class_start_at).toLocaleDateString()} (
-                {new Date(s.class_start_at).toLocaleTimeString()})
-              </option>
-            ))}
+            {sessions
+  .filter((s) => s.class_start_at) // 🔥 buang yang null / invalid
+  .sort(
+    (a, b) =>
+      new Date(b.class_start_at) - new Date(a.class_start_at)
+  ) // 🔥 latest first
+  .map((s) => {
+    const date = new Date(s.class_start_at);
+
+    return (
+      <option key={s.id} value={s.id}>
+        {s.class_name || "Event"} -{" "}
+        {date.toLocaleDateString()} ({date.toLocaleTimeString()})
+      </option>
+    );
+  })}
           </select>
 
           {sessionId ? (
