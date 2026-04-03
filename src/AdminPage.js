@@ -5,7 +5,7 @@ import SetupEvent from "./SetupEvent";
 
 const container = {
   padding: "30px",
-  background: "#f4f6fb",
+  background: "linear-gradient(135deg, #eef2ff, #f8fafc)",
   minHeight: "100vh",
   fontFamily: "Segoe UI, sans-serif",
 };
@@ -27,7 +27,8 @@ const statCard = {
   background: "#fff",
   padding: "20px",
   borderRadius: "12px",
-  boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
+  boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
+transition: "all 0.2s ease",
   cursor: "pointer",
   textAlign: "center",
   fontWeight: "600",
@@ -202,6 +203,15 @@ function AdminPage({ staffName, logout }) {
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <div style={header}>🚀 Event Check-in Dashboard</div>
             <button onClick={logout}>Logout</button>
+            style={{
+  padding: "10px 16px",
+  background: "#4f46e5",
+  color: "#fff",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "600",
+}}
           </div>
 
           <h2>Welcome, {staffName}</h2>
@@ -225,6 +235,15 @@ function AdminPage({ staffName, logout }) {
       {page === "setup" && (
         <div>
           <button onClick={() => setPage("dashboard")}>← Home</button>
+          style={{
+  padding: "10px 16px",
+  background: "#4f46e5",
+  color: "#fff",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "600",
+}}
 
          <h3 style={{ marginTop: 10 }}>📅 Create Event</h3>
 
@@ -235,6 +254,15 @@ function AdminPage({ staffName, logout }) {
       {page === "session" && (
         <div>
           <button onClick={() => setPage("dashboard")}>← Back</button>
+          style={{
+  padding: "10px 16px",
+  background: "#4f46e5",
+  color: "#fff",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "600",
+}}
 
           <h3>📱 Generate QR</h3>
 
@@ -254,6 +282,15 @@ function AdminPage({ staffName, logout }) {
           </div>
 
           <button onClick={createEventSession}>Generate QR</button>
+          style={{
+  padding: "10px 16px",
+  background: "#4f46e5",
+  color: "#fff",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "600",
+}}
 
           {isExpired && (
             <p style={{ color: "red", marginTop: 10 }}>
@@ -267,9 +304,11 @@ function AdminPage({ staffName, logout }) {
               {/* QR SIDE */}
               <div style={{
                 background: "#fff",
-                padding: 20,
-                borderRadius: 12,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+                padding: "24px",
+                border: "1px solid #e5e7eb",
+                boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
+                textAlign: "center"
+                
               }}>
                 <h4>Scan QR</h4>
 
@@ -298,6 +337,15 @@ function AdminPage({ staffName, logout }) {
       {page === "attendance" && (
         <div>
           <button onClick={() => setPage("dashboard")}>← Back</button>
+          style={{
+  padding: "10px 16px",
+  background: "#4f46e5",
+  color: "#fff",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "600",
+}}
 
           <h3>Check-in Records</h3>
 
