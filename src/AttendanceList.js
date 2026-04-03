@@ -22,7 +22,8 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
 
     if (s === "HADIR") {
       return {
-        backgroundColor: "#e6f7ec",
+        backgroundColor: "#dcfce7",
+        color: "#166534",
         color: "#1e7e34",
         padding: "6px 12px",
         borderRadius: "20px",
@@ -33,7 +34,8 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
 
     if (s === "LAMBAT") {
       return {
-        backgroundColor: "#fff4e5",
+        backgroundColor: "#fef3c7",
+        color: "#92400e",
         color: "#cc7a00",
         padding: "6px 12px",
         borderRadius: "20px",
@@ -158,7 +160,8 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
         <div
           style={{
             background: "#fff",
-            borderRadius: "12px",
+            borderRadius: "16px",
+            padding: "10px",
             boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
             overflow: "hidden",
           }}
