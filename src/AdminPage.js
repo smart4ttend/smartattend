@@ -283,7 +283,11 @@ function AdminPage({ staffName, logout }) {
 
               <div style={{ flex: 1 }}>
                 <h3>📍 {currentEventName || "Event"}</h3>
-                <AttendanceList sessionId={sessionId} hideIfExpired={true} />
+                <AttendanceList 
+  sessionId={sessionId} 
+  hideIfExpired={true}
+  currentEventName={currentEventName}
+/>
               </div>
             </div>
           )}
@@ -324,7 +328,10 @@ function AdminPage({ staffName, logout }) {
           </select>
 
           {sessionId ? (
-            <AttendanceList sessionId={sessionId} />
+            <AttendanceList 
+  sessionId={sessionId}
+  currentEventName={currentEventName}
+/>
           ) : (
             <p>Please select a session.</p>
           )}
