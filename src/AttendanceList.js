@@ -45,6 +45,38 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
     return {};
   };
 
+  // 🔥 EXPORT FUNCTION
+  const exportToCSV = () => {
+    if (rows.length === 0) {
+      alert("No data to export.");
+      return;
+    }
+
+    const headers = ["No", "Participant Name", "Status", "Check-in Time"];
+
+    const csvRows = rows.map((row, index) => [
+      index + 1,
+      row.participant_name,
+      row.status,
+      new Date(row.checkin_time).toLocaleString(),
+    ]);
+
+    const csvContent =
+      [headers, ...csvRows]
+        .map((e) => e.join(","))
+        .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "attendance.csv";
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+  };
+
   const fetchAttendance = useCallback(async () => {
     if (!sessionId) return;
 
@@ -98,9 +130,27 @@ function AttendanceList({ sessionId, hideIfExpired = false }){
         Total Checked-in: {rows.length}
       </div>
 
-      <h3 style={{ marginBottom: "15px" }}>
+      <h3 style={{ marginBottom: "10px" }}>
         📋 Event Check-in Records
       </h3>
+
+      {/* 🔥 DOWNLOAD BUTTON */}
+      <div style={{ marginBottom: "15px" }}>
+        <button
+          onClick={exportToCSV}
+          style={{
+            padding: "8px 14px",
+            background: "#28a745",
+            color: "#fff",
+            border: "none",
+            borderRadius: 6,
+            cursor: "pointer",
+            fontWeight: "600",
+          }}
+        >
+          ⬇ Download Excel
+        </button>
+      </div>
 
       {rows.length === 0 ? (
         <p>No check-in records yet.</p>
