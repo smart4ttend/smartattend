@@ -28,9 +28,19 @@ const statCard = {
   padding: "20px",
   borderRadius: "12px",
   boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-transition: "all 0.2s ease",
+  transition: "all 0.2s ease",
   cursor: "pointer",
   textAlign: "center",
+  fontWeight: "600",
+};
+
+const buttonStyle = {
+  padding: "10px 16px",
+  background: "#4f46e5",
+  color: "#fff",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
   fontWeight: "600",
 };
 
@@ -48,9 +58,6 @@ function AdminPage({ staffName, logout }) {
   const [lateAfter, setLateAfter] = useState("");
   const [endTime, setEndTime] = useState("");
 
-  // ===============================
-  // FETCH SESSION HISTORY
-  // ===============================
   useEffect(() => {
     const fetchSessions = async () => {
       const { data } = await supabase
@@ -64,9 +71,6 @@ function AdminPage({ staffName, logout }) {
     fetchSessions();
   }, []);
 
-  // ===============================
-  // FETCH EVENT NAME
-  // ===============================
   useEffect(() => {
     const fetchEventName = async () => {
       if (!sessionId) return;
@@ -85,9 +89,6 @@ function AdminPage({ staffName, logout }) {
     fetchEventName();
   }, [sessionId]);
 
-  // ===============================
-  // LOAD SAVED SESSION
-  // ===============================
   useEffect(() => {
     const loadSession = async () => {
       const savedSession = localStorage.getItem("activeSessionId");
@@ -119,18 +120,12 @@ function AdminPage({ staffName, logout }) {
     loadSession();
   }, []);
 
-  // ===============================
-  // AUTO SAVE SESSION
-  // ===============================
   useEffect(() => {
     if (sessionId) {
       localStorage.setItem("activeSessionId", sessionId);
     }
   }, [sessionId]);
 
-  // ===============================
-  // CHECK EXPIRED
-  // ===============================
   useEffect(() => {
     const checkExpired = async () => {
       if (!sessionId) return;
@@ -158,9 +153,6 @@ function AdminPage({ staffName, logout }) {
     checkExpired();
   }, [sessionId]);
 
-  // ===============================
-  // CREATE SESSION
-  // ===============================
   const createEventSession = async () => {
     if (!startTime || !lateAfter || !endTime) {
       alert("Please fill in all fields.");
@@ -197,21 +189,13 @@ function AdminPage({ staffName, logout }) {
 
   return (
     <div style={container}>
-      {/* DASHBOARD */}
       {page === "dashboard" && (
         <>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <div style={header}>🚀 Event Check-in Dashboard</div>
-            <button onClick={logout}>Logout</button>
-            style={{
-  padding: "10px 16px",
-  background: "#4f46e5",
-  color: "#fff",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
-  fontWeight: "600",
-}}
+            <button onClick={logout} style={buttonStyle}>
+              Logout
+            </button>
           </div>
 
           <h2>Welcome, {staffName}</h2>
@@ -231,42 +215,27 @@ function AdminPage({ staffName, logout }) {
           </div>
         </>
       )}
-      {/* SETUP EVENT */}
+
       {page === "setup" && (
         <div>
-          <button onClick={() => setPage("dashboard")}>← Home</button>
-          style={{
-  padding: "10px 16px",
-  background: "#4f46e5",
-  color: "#fff",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
-  fontWeight: "600",
-}}
+          <button onClick={() => setPage("dashboard")} style={buttonStyle}>
+            ← Home
+          </button>
 
-         <h3 style={{ marginTop: 10 }}>📅 Create Event</h3>
+          <h3 style={{ marginTop: 10 }}>📅 Create Event</h3>
 
-       <SetupEvent staffName={staffName} />
-      </div>
+          <SetupEvent staffName={staffName} />
+        </div>
       )}
-      {/* GENERATE QR */}
+
       {page === "session" && (
         <div>
-          <button onClick={() => setPage("dashboard")}>← Back</button>
-          style={{
-  padding: "10px 16px",
-  background: "#4f46e5",
-  color: "#fff",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
-  fontWeight: "600",
-}}
+          <button onClick={() => setPage("dashboard")} style={buttonStyle}>
+            ← Back
+          </button>
 
           <h3>📱 Generate QR</h3>
 
-          {/* 🔥 EVENT NAME INPUT */}
           <input
             type="text"
             placeholder="Event Name / Program"
@@ -281,16 +250,9 @@ function AdminPage({ staffName, logout }) {
             <input type="datetime-local" onChange={(e) => setEndTime(e.target.value)} />
           </div>
 
-          <button onClick={createEventSession}>Generate QR</button>
-          style={{
-  padding: "10px 16px",
-  background: "#4f46e5",
-  color: "#fff",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
-  fontWeight: "600",
-}}
+          <button onClick={createEventSession} style={buttonStyle}>
+            Generate QR
+          </button>
 
           {isExpired && (
             <p style={{ color: "red", marginTop: 10 }}>
@@ -300,20 +262,17 @@ function AdminPage({ staffName, logout }) {
 
           {sessionId && !isExpired && (
             <div style={{ display: "flex", gap: 30, marginTop: 20 }}>
-              
-              {/* QR SIDE */}
               <div style={{
                 background: "#fff",
                 padding: "24px",
                 border: "1px solid #e5e7eb",
                 boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
                 textAlign: "center"
-                
               }}>
                 <h4>Scan QR</h4>
 
                 <p style={{ fontWeight: "600", marginBottom: 10 }}>
-                  {currentEventName}
+                  {currentEventName || "Event"}
                 </p>
 
                 <img
@@ -322,30 +281,20 @@ function AdminPage({ staffName, logout }) {
                 />
               </div>
 
-              {/* ATTENDANCE SIDE */}
               <div style={{ flex: 1 }}>
-                <h3>📍 {currentEventName}</h3>
+                <h3>📍 {currentEventName || "Event"}</h3>
                 <AttendanceList sessionId={sessionId} hideIfExpired={true} />
               </div>
-
             </div>
           )}
         </div>
       )}
 
-      {/* ATTENDANCE */}
       {page === "attendance" && (
         <div>
-          <button onClick={() => setPage("dashboard")}>← Back</button>
-          style={{
-  padding: "10px 16px",
-  background: "#4f46e5",
-  color: "#fff",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
-  fontWeight: "600",
-}}
+          <button onClick={() => setPage("dashboard")} style={buttonStyle}>
+            ← Back
+          </button>
 
           <h3>Check-in Records</h3>
 
@@ -357,21 +306,17 @@ function AdminPage({ staffName, logout }) {
             <option value="">Select Session</option>
 
             {sessions
-  .filter((s) => s.class_start_at) // 🔥 buang yang null / invalid
-  .sort(
-    (a, b) =>
-      new Date(b.class_start_at) - new Date(a.class_start_at)
-  ) // 🔥 latest first
-  .map((s) => {
-    const date = new Date(s.class_start_at);
+              .filter((s) => s.class_start_at)
+              .sort((a, b) => new Date(b.class_start_at) - new Date(a.class_start_at))
+              .map((s) => {
+                const date = new Date(s.class_start_at);
 
-    return (
-      <option key={s.id} value={s.id}>
-        {s.class_name || "Event"} -{" "}
-        {date.toLocaleDateString()} ({date.toLocaleTimeString()})
-      </option>
-    );
-  })}
+                return (
+                  <option key={s.id} value={s.id}>
+                    {(s.class_name || "Event")} - {date.toLocaleDateString()} ({date.toLocaleTimeString()})
+                  </option>
+                );
+              })}
           </select>
 
           {sessionId ? (
