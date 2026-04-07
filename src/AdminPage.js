@@ -315,7 +315,7 @@ function AdminPage({ staffName, logout }) {
             onChange={(e) => setSessionId(e.target.value || null)}
             style={{ padding: 8, marginBottom: 15 }}
           >
-            <option value="">Select Session</option>
+            <option value="">Select Program</option>
 
             {sessions
                .filter((s) => s.class_name) // 🔥 guna nama program
