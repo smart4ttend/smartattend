@@ -58,18 +58,20 @@ function AdminPage({ staffName, logout }) {
   const [lateAfter, setLateAfter] = useState("");
   const [endTime, setEndTime] = useState("");
 
+  // ✅ FILTER SESSION IKUT USER
   useEffect(() => {
     const fetchSessions = async () => {
       const { data } = await supabase
         .from("attendance_sessions")
         .select("*")
+        .eq("created_by", staffName) // 🔥 TAMBAH SINI
         .order("id", { ascending: false });
 
       setSessions(data || []);
     };
 
     fetchSessions();
-  }, []);
+  }, [staffName]);
 
   useEffect(() => {
     const fetchEventName = async () => {
@@ -153,6 +155,7 @@ function AdminPage({ staffName, logout }) {
     checkExpired();
   }, [sessionId]);
 
+  // ✅ TAMBAH created_by
   const createEventSession = async () => {
     if (!startTime || !lateAfter || !endTime) {
       alert("Please fill in all fields.");
@@ -173,6 +176,7 @@ function AdminPage({ staffName, logout }) {
             late_after: lateAfter,
             expires_at: endTime,
             class_name: eventName.trim(),
+            created_by: staffName, // 🔥 TAMBAH SINI
           },
         ])
         .select()
@@ -284,10 +288,10 @@ function AdminPage({ staffName, logout }) {
               <div style={{ flex: 1 }}>
                 <h3>📍 {currentEventName || "Event"}</h3>
                 <AttendanceList 
-  sessionId={sessionId} 
-  hideIfExpired={true}
-  currentEventName={currentEventName}
-/>
+                  sessionId={sessionId} 
+                  hideIfExpired={true}
+                  currentEventName={currentEventName}
+                />
               </div>
             </div>
           )}
@@ -302,9 +306,9 @@ function AdminPage({ staffName, logout }) {
 
           <h3>Check-in Records</h3>
 
-<p style={{ fontWeight: "600", marginBottom: "10px" }}>
-  📌 {currentEventName || "No Event Selected"}
-</p>
+          <p style={{ fontWeight: "600", marginBottom: "10px" }}>
+            📌 {currentEventName || "No Event Selected"}
+          </p>
 
           <select
             value={sessionId || ""}
@@ -314,9 +318,9 @@ function AdminPage({ staffName, logout }) {
             <option value="">Select Session</option>
 
             {sessions
-              .filter((s) => s.class_start_at)
-              .sort((a, b) => new Date(b.class_start_at) - new Date(a.class_start_at))
-              .map((s) => {
+               .filter((s) => s.class_name) // 🔥 guna nama program
+               .sort((a, b) => a.class_name.localeCompare(b.class_name)) // sort ikut nama
+               .map((s) => {
                 const date = new Date(s.class_start_at);
 
                 return (
@@ -329,9 +333,9 @@ function AdminPage({ staffName, logout }) {
 
           {sessionId ? (
             <AttendanceList 
-  sessionId={sessionId}
-  currentEventName={currentEventName}
-/>
+              sessionId={sessionId}
+              currentEventName={currentEventName}
+            />
           ) : (
             <p>Please select a session.</p>
           )}
