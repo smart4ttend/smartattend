@@ -50,7 +50,7 @@ function SetupEvent({ staffName }) {
           {
             lecturer_name: staffName,
             course_code: eventName.trim().toUpperCase(), // 🔒 mapping
-            semester: session.trim() || null, // optional
+            semester: session.trim() || "N/A"
           },
         ]);
 
