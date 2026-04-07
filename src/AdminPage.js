@@ -321,11 +321,10 @@ function AdminPage({ staffName, logout }) {
                .filter((s) => s.class_name) // 🔥 guna nama program
                .sort((a, b) => a.class_name.localeCompare(b.class_name)) // sort ikut nama
                .map((s) => {
-                const date = new Date(s.class_start_at);
 
                 return (
                   <option key={s.id} value={s.id}>
-                    {(s.class_name || "Event")} - {date.toLocaleDateString()} ({date.toLocaleTimeString()})
+                  {s.class_name || "Event"}
                   </option>
                 );
               })}
