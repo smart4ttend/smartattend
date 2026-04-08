@@ -312,11 +312,17 @@ function AdminPage({ staffName, logout }) {
 
           <select
           name="program"
-  value={sessionId || ""}
-  onChange={(e) => {
-  const selectedId = e.target.value; // 🔥 TAMBAH INI
+  value={sessionId ?? ""}
+onChange={(e) => {
+  const selectedId = e.target.value;
 
-  const numericId = selectedId ? parseInt(selectedId) : null;
+  if (!selectedId) {
+    setSessionId(null);
+    setCurrentEventName("");
+    return;
+  }
+
+  const numericId = parseInt(selectedId);
 
   setSessionId(numericId);
 
@@ -339,7 +345,7 @@ function AdminPage({ staffName, logout }) {
               })}
           </select>
 
-          {sessionId ? (
+          {sessionId && !isNaN(sessionId) ? (
             <AttendanceList 
               sessionId={sessionId}
               currentEventName={currentEventName}
