@@ -314,13 +314,15 @@ function AdminPage({ staffName, logout }) {
           name="program"
   value={sessionId || ""}
   onChange={(e) => {
-    const selectedId = e.target.value;
+  const selectedId = e.target.value; // 🔥 TAMBAH INI
 
-setSessionId(selectedId ? Number(selectedId) : null); // 🔥 convert ke number
+  const numericId = selectedId ? parseInt(selectedId) : null;
 
-const selected = sessions.find(s => s.id === Number(selectedId));
-setCurrentEventName(selected?.class_name || "");
-  }}
+  setSessionId(numericId);
+
+  const selected = sessions.find(s => s.id === numericId);
+  setCurrentEventName(selected?.class_name || "");
+}}
 >
             <option value="">Select Program</option>
 
