@@ -311,10 +311,15 @@ function AdminPage({ staffName, logout }) {
           </p>
 
           <select
-            value={sessionId || ""}
-            onChange={(e) => setSessionId(e.target.value || null)}
-            style={{ padding: 8, marginBottom: 15 }}
-          >
+          name="program"
+  value={sessionId || ""}
+  onChange={(e) => {
+    const selectedId = e.target.value;
+    setSessionId(selectedId || null);
+    const selected = sessions.find(s => s.id === selectedId);
+    setCurrentEventName(selected?.class_name || "");
+  }}
+>
             <option value="">Select Program</option>
 
             {sessions
@@ -336,7 +341,7 @@ function AdminPage({ staffName, logout }) {
               currentEventName={currentEventName}
             />
           ) : (
-            <p>Please select a session.</p>
+            <p>Please select a program.</p>
           )}
         </div>
       )}
