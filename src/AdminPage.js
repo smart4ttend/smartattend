@@ -315,9 +315,11 @@ function AdminPage({ staffName, logout }) {
   value={sessionId || ""}
   onChange={(e) => {
     const selectedId = e.target.value;
-    setSessionId(selectedId || null);
-    const selected = sessions.find(s => s.id === selectedId);
-    setCurrentEventName(selected?.class_name || "");
+
+setSessionId(selectedId ? Number(selectedId) : null); // 🔥 convert ke number
+
+const selected = sessions.find(s => s.id === Number(selectedId));
+setCurrentEventName(selected?.class_name || "");
   }}
 >
             <option value="">Select Program</option>
