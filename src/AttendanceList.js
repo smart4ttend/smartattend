@@ -78,41 +78,41 @@ function AttendanceList({ sessionId, hideIfExpired = false, currentEventName }){
     window.URL.revokeObjectURL(url);
   };
 
-  const fetchAttendance = useCallback(async () => {
-    if (!sessionId) return;
+const fetchAttendance = useCallback(async () => {
+  if (sessionId === null) return; // ✅ FIX 1
 
-    const { data, error } = await supabase
-      .from("attendance_records")
-      .select("id, student_matric, timestamp, status")
-      .eq("session_id", sessionId)
-      .order("timestamp", { ascending: false });
+  const { data, error } = await supabase
+    .from("attendance_records")
+    .select("id, student_matric, timestamp, status")
+    .eq("session_id", String(sessionId)) // ✅ FIX 2
+    .order("timestamp", { ascending: false });
 
-    if (error) {
-      setRows([]);
-      setLoading(false);
-      return;
-    }
-
-    const records = data || [];
-
-    if (records.length > 0 && records[0].id !== highlightId) {
-      setHighlightId(records[0].id);
-
-      setTimeout(() => {
-        setHighlightId(null);
-      }, 2000);
-    }
-
-    const formatted = records.map((r) => ({
-      id: r.id,
-      participant_name: r.student_matric,
-      status: r.status,
-      checkin_time: r.timestamp,
-    }));
-
-    setRows(formatted);
+  if (error) {
+    setRows([]);
     setLoading(false);
-  }, [sessionId, highlightId]);
+    return;
+  }
+
+  const records = data || [];
+
+  if (records.length > 0 && records[0].id !== highlightId) {
+    setHighlightId(records[0].id);
+
+    setTimeout(() => {
+      setHighlightId(null);
+    }, 2000);
+  }
+
+  const formatted = records.map((r) => ({
+    id: r.id,
+    participant_name: r.student_matric,
+    status: r.status,
+    checkin_time: r.timestamp,
+  }));
+
+  setRows(formatted);
+  setLoading(false);
+}, [sessionId, highlightId]);
 
   useEffect(() => {
     fetchAttendance();
