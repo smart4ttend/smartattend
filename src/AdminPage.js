@@ -58,13 +58,12 @@ function AdminPage({ staffName, logout }) {
   const [lateAfter, setLateAfter] = useState("");
   const [endTime, setEndTime] = useState("");
 
-  // ✅ FILTER SESSION IKUT USER
   useEffect(() => {
     const fetchSessions = async () => {
       const { data } = await supabase
         .from("attendance_sessions")
         .select("*")
-        .eq("created_by", staffName) // 🔥 TAMBAH SINI
+        .eq("created_by", staffName)
         .order("id", { ascending: false });
 
       setSessions(data || []);
@@ -155,7 +154,6 @@ function AdminPage({ staffName, logout }) {
     checkExpired();
   }, [sessionId]);
 
-  // ✅ TAMBAH created_by
   const createEventSession = async () => {
     if (!startTime || !lateAfter || !endTime) {
       alert("Please fill in all fields.");
@@ -176,7 +174,7 @@ function AdminPage({ staffName, logout }) {
             late_after: lateAfter,
             expires_at: endTime,
             class_name: eventName.trim(),
-            created_by: staffName, // 🔥 TAMBAH SINI
+            created_by: staffName,
           },
         ])
         .select()
@@ -219,85 +217,61 @@ function AdminPage({ staffName, logout }) {
           </div>
         </>
       )}
+{page === "session" && (
+  <div>
+    <button onClick={() => setPage("dashboard")} style={buttonStyle}>
+      ← Back
+    </button>
 
-      {page === "setup" && (
-        <div>
-          <button onClick={() => setPage("dashboard")} style={buttonStyle}>
-            ← Home
-          </button>
+    <h3>📱 Generate QR</h3>
 
-          <h3 style={{ marginTop: 10 }}>📅 Create Event</h3>
+    <input
+      type="text"
+      placeholder="Event Name / Program"
+      value={eventName}
+      onChange={(e) => setEventName(e.target.value)}
+      style={{ width: "100%", padding: 8, marginBottom: 10 }}
+    />
 
-          <SetupEvent staffName={staffName} />
-        </div>
-      )}
+    <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+      <input type="datetime-local" onChange={(e) => setStartTime(e.target.value)} />
+      <input type="datetime-local" onChange={(e) => setLateAfter(e.target.value)} />
+      <input type="datetime-local" onChange={(e) => setEndTime(e.target.value)} />
+    </div>
 
-      {page === "session" && (
-        <div>
-          <button onClick={() => setPage("dashboard")} style={buttonStyle}>
-            ← Back
-          </button>
+    <button onClick={createEventSession} style={buttonStyle}>
+      Generate QR
+    </button>
 
-          <h3>📱 Generate QR</h3>
+    {isExpired && (
+      <p style={{ color: "red", marginTop: 10 }}>
+        ⚠️ Session has ended. Please generate a new QR.
+      </p>
+    )}
 
-          <input
-            type="text"
-            placeholder="Event Name / Program"
-            value={eventName}
-            onChange={(e) => setEventName(e.target.value)}
-            style={{ width: "100%", padding: 8, marginBottom: 10 }}
-          />
+    {sessionId && !isExpired && (
+      <div style={{ marginTop: 20 }}>
+        <h3>📍 {currentEventName || "Event"}</h3>
 
-          <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-            <input type="datetime-local" onChange={(e) => setStartTime(e.target.value)} />
-            <input type="datetime-local" onChange={(e) => setLateAfter(e.target.value)} />
-            <input type="datetime-local" onChange={(e) => setEndTime(e.target.value)} />
-          </div>
+        <img
+          src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${window.location.origin}/attendance?session_id=${sessionId}`}
+          alt="QR"
+        />
+      </div>
+    )}
+  </div>
+)}
+{page === "setup" && (
+  <div>
+    <button onClick={() => setPage("dashboard")} style={buttonStyle}>
+      ← Home
+    </button>
 
-          <button onClick={createEventSession} style={buttonStyle}>
-            Generate QR
-          </button>
+    <h3 style={{ marginTop: 10 }}>📅 Create Event</h3>
 
-          {isExpired && (
-            <p style={{ color: "red", marginTop: 10 }}>
-              ⚠️ Session has ended. Please generate a new QR.
-            </p>
-          )}
-
-          {sessionId && !isExpired && (
-            <div style={{ display: "flex", gap: 30, marginTop: 20 }}>
-              <div style={{
-                background: "#fff",
-                padding: "24px",
-                border: "1px solid #e5e7eb",
-                boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-                textAlign: "center"
-              }}>
-                <h4>Scan QR</h4>
-
-                <p style={{ fontWeight: "600", marginBottom: 10 }}>
-                  {currentEventName || "Event"}
-                </p>
-
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${window.location.origin}/attendance?session_id=${sessionId}`}
-                  alt="QR"
-                />
-              </div>
-
-              <div style={{ flex: 1 }}>
-                <h3>📍 {currentEventName || "Event"}</h3>
-                <AttendanceList 
-                  sessionId={sessionId} 
-                  hideIfExpired={true}
-                  currentEventName={currentEventName}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
+    <SetupEvent staffName={staffName} />
+  </div>
+)}
       {page === "attendance" && (
         <div>
           <button onClick={() => setPage("dashboard")} style={buttonStyle}>
@@ -310,43 +284,39 @@ function AdminPage({ staffName, logout }) {
             📌 {currentEventName || "No Event Selected"}
           </p>
 
+          {/* ✅ FIXED SELECT */}
           <select
-          name="program"
-  value={sessionId ?? ""}
-onChange={(e) => {
-  const selectedId = e.target.value;
+            name="program"
+            value={sessionId ?? ""}
+            onChange={(e) => {
+              const selectedId = e.target.value;
 
-  if (!selectedId) {
-    setSessionId(null);
-    setCurrentEventName("");
-    return;
-  }
+              if (!selectedId) {
+                setSessionId(null);
+                setCurrentEventName("");
+                return;
+              }
 
-  const numericId = parseInt(selectedId);
+              setSessionId(selectedId);
 
-  setSessionId(numericId);
-
-  const selected = sessions.find(s => s.id === numericId);
-  setCurrentEventName(selected?.class_name || "");
-}}
->
+              const selected = sessions.find(s => s.id === selectedId);
+              setCurrentEventName(selected?.class_name || "");
+            }}
+          >
             <option value="">Select Program</option>
 
             {sessions
-               .filter((s) => s.class_name) // 🔥 guna nama program
-               .sort((a, b) => a.class_name.localeCompare(b.class_name)) // sort ikut nama
-               .map((s) => {
-
-                return (
-                  <option key={s.id} value={s.id}>
+              .filter((s) => s.class_name)
+              .sort((a, b) => a.class_name.localeCompare(b.class_name))
+              .map((s) => (
+                <option key={s.id} value={s.id}>
                   {s.class_name || "Event"}
-                  </option>
-                );
-              })}
+                </option>
+              ))}
           </select>
 
-          {sessionId && !isNaN(sessionId) ? (
-            <AttendanceList 
+          {sessionId ? (
+            <AttendanceList
               sessionId={sessionId}
               currentEventName={currentEventName}
             />
