@@ -269,14 +269,38 @@ if (!data || data.created_by !== staffName) {
         />
       </div>
     )}
-    {sessionId && (
-  <div style={{ marginTop: 30 }}>
-    <h3>📋 Live Attendance</h3>
+{sessionId && (
+  <div
+    style={{
+      display: "flex",
+      gap: "30px",
+      alignItems: "flex-start",
+      marginTop: 20,
+      flexWrap: "wrap",
+    }}
+  >
+    {/* QR */}
+    {sessionId && !isExpired && currentEventName && (
+      <div>
+        <h3>📍 {currentEventName || "Event"}</h3>
 
-    <AttendanceList
-      sessionId={sessionId}
-      currentEventName={currentEventName}
-    />
+        <img
+          style={{ width: 250 }}
+          src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${window.location.origin}/attendance?session_id=${sessionId}`}
+          alt="QR"
+        />
+      </div>
+    )}
+
+    {/* Attendance */}
+    <div style={{ flex: 1, minWidth: 300 }}>
+      <h3>📋 Live Attendance</h3>
+
+      <AttendanceList
+        sessionId={sessionId}
+        currentEventName={currentEventName}
+      />
+    </div>
   </div>
 )}
   </div>
