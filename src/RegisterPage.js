@@ -15,10 +15,13 @@ function RegisterPage({ onBack }) {
 
     setLoading(true);
 
-const { error } = await supabase.auth.signUp({
-  email: adminId.trim(),
-  password: password,
-});
+const { error } = await supabase.from("staff").insert([
+  {
+    staff_no: adminId.trim().toUpperCase(),
+    name: name.trim(),
+    password: password,
+  },
+]);
 
     setLoading(false);
 
@@ -62,7 +65,7 @@ const { error } = await supabase.auth.signUp({
 
         <input
           type="text"
-          placeholder="Enter Email (e.g. admin@gmail.com)"
+          placeholder="Enter Admin ID (e.g. AD001)"
           value={adminId}
           onChange={(e) => setAdminId(e.target.value)}
           style={{
