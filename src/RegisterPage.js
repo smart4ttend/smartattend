@@ -62,7 +62,7 @@ const { error } = await supabase.auth.signUp({
 
         <input
           type="text"
-          placeholder="Enter Admin ID (e.g. ADM001)"
+          placeholder="Enter Email (e.g. admin@gmail.com)"
           value={adminId}
           onChange={(e) => setAdminId(e.target.value)}
           style={{
