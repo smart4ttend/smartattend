@@ -181,6 +181,7 @@ function AdminPage({ staffName, logout }) {
         .single();
 
       setSessionId(data.id);
+      setSessions(prev => [data, ...prev]);
       localStorage.setItem("activeSessionId", data.id);
       setIsExpired(false);
       setEventName("");
