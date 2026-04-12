@@ -73,6 +73,10 @@ function AdminPage({ staffName, logout }) {
   }, [staffName]);
 
   useEffect(() => {
+  setSessionId(null);
+}, [staffName]);
+
+  useEffect(() => {
     const fetchEventName = async () => {
       if (!sessionId) return;
 
@@ -96,13 +100,18 @@ function AdminPage({ staffName, logout }) {
 
       if (!savedSession || savedSession === "null") return;
 
-      const { data } = await supabase
-        .from("attendance_sessions")
-        .select("expires_at")
-        .eq("id", savedSession)
-        .single();
+const { data } = await supabase
+  .from("attendance_sessions")
+  .select("expires_at, created_by") // 🔥 tambah ini
+  .eq("id", savedSession)
+  .single();
 
-      if (!data) return;
+// 🔥 VALIDATE OWNER
+if (!data || data.created_by !== staffName) {
+  localStorage.removeItem("activeSessionId");
+  setSessionId(null);
+  return;
+}
 
       const now = new Date();
       const expired = new Date(data.expires_at);
@@ -250,7 +259,7 @@ function AdminPage({ staffName, logout }) {
       </p>
     )}
 
-    {sessionId && !isExpired && (
+    {sessionId && !isExpired && currentEventName && (
       <div style={{ marginTop: 20 }}>
         <h3>📍 {currentEventName || "Event"}</h3>
 
