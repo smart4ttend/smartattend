@@ -4,6 +4,7 @@ import { supabase } from "./supabase";
 function LoginPage({ onLogin, onRegister }) {
   const [userId, setUserId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
     if (!userId.trim()) {
@@ -32,6 +33,21 @@ function LoginPage({ onLogin, onRegister }) {
       alert("❌ Invalid Admin ID");
       return;
     }
+
+    <input
+  type="password"
+  placeholder="Enter Password"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  style={{
+    width: "100%",
+    padding: "10px",
+    borderRadius: "8px",
+    border: "1px solid #ddd",
+    marginBottom: "15px",
+    outline: "none",
+  }}
+/>
 
     // ✅ LOGIN SUCCESS
     onLogin("admin", data[0].name); // tukar role frontend sahaja
