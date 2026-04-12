@@ -269,6 +269,16 @@ if (!data || data.created_by !== staffName) {
         />
       </div>
     )}
+    {sessionId && (
+  <div style={{ marginTop: 30 }}>
+    <h3>📋 Live Attendance</h3>
+
+    <AttendanceList
+      sessionId={sessionId}
+      currentEventName={currentEventName}
+    />
+  </div>
+)}
   </div>
 )}
 {page === "setup" && (
