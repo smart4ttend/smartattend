@@ -37,7 +37,9 @@ function App() {
     localStorage.setItem("userId", id);
   };
 
-  const handleLogout = () => {
+const handleLogout = () => {
+  localStorage.removeItem("activeSessionId"); // 🔥 WAJIB TAMBAH
+  // existing logout logic (jangan buang)
     setUserType(null);
     setUserId(null);
    localStorage.removeItem("userType");
