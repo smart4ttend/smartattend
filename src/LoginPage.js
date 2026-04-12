@@ -83,7 +83,7 @@ function LoginPage({ onLogin, onRegister }) {
 
         <input
           type="text"
-          placeholder="Enter Admin ID"
+          placeholder="Enter email"
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
           style={{
