@@ -12,24 +12,30 @@ const handleLogin = async () => {
     return;
   }
 
-  const email = `${userId.trim()}@smartattend.com`;
+  const idTrim = userId.trim().toUpperCase();
 
   setLoading(true);
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: email,
-    password: password,
-  });
+  const { data, error } = await supabase
+    .from("staff")
+    .select("*")
+    .eq("staff_no", idTrim)
+    .eq("password", password)
+    .limit(1);
 
   setLoading(false);
 
   if (error) {
-    alert("Login failed: " + error.message);
+    alert("System error: " + error.message);
     return;
   }
 
-  // ✅ LOGIN SUCCESS (tak ubah flow lain)
-  onLogin("admin", userId.trim());
+  if (!data || data.length === 0) {
+    alert("❌ Invalid Admin ID or Password");
+    return;
+  }
+
+  onLogin("admin", data[0].name);
 };
 
   return (
@@ -62,7 +68,7 @@ const handleLogin = async () => {
 
         <input
           type="text"
-          placeholder="Enter email"
+          placeholder="Enter Admin ID (e.g. ADM001)"
           value={userId}
           onChange={(e) => setUserId(e.target.value)}
           style={{
