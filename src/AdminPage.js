@@ -259,16 +259,7 @@ if (!data || data.created_by !== staffName) {
       </p>
     )}
 
-    {sessionId && !isExpired && currentEventName && (
-      <div style={{ marginTop: 20 }}>
-        <h3>📍 {currentEventName || "Event"}</h3>
 
-        <img
-          src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${window.location.origin}/attendance?session_id=${sessionId}`}
-          alt="QR"
-        />
-      </div>
-    )}
 {sessionId && (
   <div
     style={{
@@ -285,7 +276,7 @@ if (!data || data.created_by !== staffName) {
         <h3>📍 {currentEventName || "Event"}</h3>
 
         <img
-          style={{ width: 250 }}
+          style={{ width: 350 }}
           src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${window.location.origin}/attendance?session_id=${sessionId}`}
           alt="QR"
         />
