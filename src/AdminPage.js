@@ -306,7 +306,7 @@ function AdminPage({ staffName, logout }) {
             <option value="">Select Program</option>
 
             {sessions
-              .filter((s) => s.class_name)
+              .filter((s) => s.id)
               .sort((a, b) => a.class_name.localeCompare(b.class_name))
               .map((s) => (
                 <option key={s.id} value={s.id}>
