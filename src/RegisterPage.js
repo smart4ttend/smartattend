@@ -5,6 +5,7 @@ function RegisterPage({ onBack }) {
   const [adminId, setAdminId] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState("");
 
   const handleRegister = async () => {
     if (!adminId || !name) {
@@ -14,15 +15,10 @@ function RegisterPage({ onBack }) {
 
     setLoading(true);
 
-    // 🔒 Backend kekal (staff table)
-    const { error } = await supabase
-      .from("staff")
-      .insert([
-        {
-          staff_no: adminId.trim().toUpperCase(),
-          name: name.trim(),
-        },
-      ]);
+const { error } = await supabase.auth.signUp({
+  email: adminId.trim(),
+  password: password,
+});
 
     setLoading(false);
 
@@ -93,6 +89,13 @@ function RegisterPage({ onBack }) {
             outline: "none",
           }}
         />
+
+<input
+  type="password"
+  placeholder="Enter password"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+/>
 
         <button
           onClick={handleRegister}
