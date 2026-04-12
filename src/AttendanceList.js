@@ -3,7 +3,7 @@ import { supabase } from "./supabase";
 
 function AttendanceList({ sessionId, hideIfExpired = false, currentEventName }){
   const [rows, setRows] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [highlightId, setHighlightId] = useState(null);
 
   const thStyle = {
@@ -114,11 +114,16 @@ const fetchAttendance = useCallback(async () => {
   setLoading(false);
 }, [sessionId, highlightId]);
 
-  useEffect(() => {
-    fetchAttendance();
-    const interval = setInterval(fetchAttendance, 3000);
-    return () => clearInterval(interval);
-  }, [fetchAttendance]);
+useEffect(() => {
+  if (!sessionId) {
+    setLoading(false);
+    return;
+  }
+
+  fetchAttendance();
+  const interval = setInterval(fetchAttendance, 3000);
+  return () => clearInterval(interval);
+}, [fetchAttendance, sessionId]);
 
   if (loading) return <p>Loading check-in records...</p>;
 
