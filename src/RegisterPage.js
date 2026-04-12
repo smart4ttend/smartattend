@@ -8,10 +8,10 @@ function RegisterPage({ onBack }) {
   const [password, setPassword] = useState("");
 
   const handleRegister = async () => {
-    if (!adminId || !name) {
-      alert("Please fill in all fields");
-      return;
-    }
+  if (!adminId || !name || !password) {
+  alert("Please fill in all fields");
+  return;
+ }
 
     setLoading(true);
 
@@ -92,9 +92,17 @@ const { error } = await supabase.auth.signUp({
 
 <input
   type="password"
-  placeholder="Enter password"
+  placeholder="Enter Password"
   value={password}
   onChange={(e) => setPassword(e.target.value)}
+  style={{
+    width: "100%",
+    padding: "10px",
+    borderRadius: "8px",
+    border: "1px solid #ddd",
+    marginBottom: "15px",
+    outline: "none",
+  }}
 />
 
         <button
