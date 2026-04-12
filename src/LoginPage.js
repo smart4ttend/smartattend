@@ -6,52 +6,31 @@ function LoginPage({ onLogin, onRegister }) {
   const [loading, setLoading] = useState(false);
   const [password, setPassword] = useState("");
 
-  const handleLogin = async () => {
-    if (!userId.trim()) {
-      alert("Please enter Admin ID");
-      return;
-    }
+const handleLogin = async () => {
+  if (!userId.trim() || !password) {
+    alert("Please enter Admin ID and Password");
+    return;
+  }
 
-    const idTrim = userId.trim().toUpperCase();
-    setLoading(true);
+  const email = `${userId.trim()}@smartattend.com`;
 
-    // 🔒 Backend kekal (staff table)
-    const { data, error } = await supabase
-      .from("staff")
-      .select("name")
-      .eq("staff_no", idTrim)
-      .limit(1);
+  setLoading(true);
 
-    setLoading(false);
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: password,
+  });
 
-    if (error) {
-      alert("System error: " + error.message);
-      return;
-    }
+  setLoading(false);
 
-    if (!data || data.length === 0) {
-      alert("❌ Invalid Admin ID");
-      return;
-    }
+  if (error) {
+    alert("Login failed: " + error.message);
+    return;
+  }
 
-    <input
-  type="password"
-  placeholder="Enter Password"
-  value={password}
-  onChange={(e) => setPassword(e.target.value)}
-  style={{
-    width: "100%",
-    padding: "10px",
-    borderRadius: "8px",
-    border: "1px solid #ddd",
-    marginBottom: "15px",
-    outline: "none",
-  }}
-/>
-
-    // ✅ LOGIN SUCCESS
-    onLogin("admin", data[0].name); // tukar role frontend sahaja
-  };
+  // ✅ LOGIN SUCCESS (tak ubah flow lain)
+  onLogin("admin", userId.trim());
+};
 
   return (
     <div
@@ -96,6 +75,20 @@ function LoginPage({ onLogin, onRegister }) {
           }}
         />
 
+<input
+  type="password"
+  placeholder="Enter Password"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  style={{
+    width: "100%",
+    padding: "10px",
+    borderRadius: "8px",
+    border: "1px solid #ddd",
+    marginBottom: "15px",
+    outline: "none",
+  }}
+/>
         <button
           onClick={handleLogin}
           disabled={loading}
