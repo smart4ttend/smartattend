@@ -32,7 +32,9 @@ function AttendancePage() {
   setErrorMsg("Event not found.");
   return;
 }
-
+console.log("URL TOKEN:", token);
+console.log("DB TOKEN:", data.qr_token);
+console.log("DB EXPIRY:", data.qr_expiry);
 // 🔥 QR lama tanpa token
 if (!token) {
   setErrorMsg(
