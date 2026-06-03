@@ -78,22 +78,22 @@ function AdminPage({ staffName, logout }) {
 }, [staffName]);
 
   useEffect(() => {
-    const fetchEventName = async () => {
-      if (!sessionId) return;
+  const fetchToken = async () => {
+    if (!sessionId) return;
 
-      const { data } = await supabase
-        .from("attendance_sessions")
-        .select("class_name")
-        .eq("id", sessionId)
-        .single();
+    const { data } = await supabase
+      .from("attendance_sessions")
+      .select("qr_token")
+      .eq("id", sessionId)
+      .single();
 
-      if (data) {
-        setCurrentEventName(data.class_name);
-      }
-    };
+    if (data?.qr_token) {
+      setQrToken(data.qr_token);
+    }
+  };
 
-    fetchEventName();
-  }, [sessionId]);
+  fetchToken();
+}, [sessionId]);
 
   useEffect(() => {
     const loadSession = async () => {
