@@ -309,7 +309,7 @@ const { data } = await supabase
       <div>
         <h3>📍 {currentEventName || "Event"}</h3>
 
-        <img
+       <img
   style={{ width: 350 }}
   src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${window.location.origin}/attendance?session_id=${sessionId}&token=${qrToken}`}
   alt="QR"
