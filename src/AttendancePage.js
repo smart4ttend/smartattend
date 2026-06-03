@@ -32,7 +32,15 @@ function AttendancePage() {
         setErrorMsg("Event not found.");
         return;
       }
-
+      if (
+  token !== data.qr_token ||
+  new Date() > new Date(data.qr_expiry)
+) {
+  setErrorMsg(
+    "QR Code expired. Please scan the latest QR code."
+  );
+  return;
+}
       setEvent(data);
     };
 
