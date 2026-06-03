@@ -22,7 +22,9 @@ function AttendancePage() {
     const fetchEvent = async () => {
       const { data, error } = await supabase
         .from("attendance_sessions")
-        .select("class_start_at, late_after, expires_at")
+        .select(
+  "class_start_at, late_after, expires_at, qr_token, qr_expiry"
+)
         .eq("id", sessionId)
         .single();
 
