@@ -315,6 +315,12 @@ const { data } = await supabase
   src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${window.location.origin}/attendance?session_id=${sessionId}&token=${qrToken}`}
   alt="QR"
 />
+
+<p><b>QR Token:</b> {qrToken}</p>
+
+<p style={{ fontSize: "12px", wordBreak: "break-all" }}>
+  {window.location.origin}/attendance?session_id={sessionId}&token={qrToken}
+</p>
       </div>
     )}
 
