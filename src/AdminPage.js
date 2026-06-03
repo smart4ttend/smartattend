@@ -175,17 +175,23 @@ if (!data || data.created_by !== staffName) {
     }
 
     try {
-      const { data } = await supabase
-        .from("attendance_sessions")
-        .insert([
-          {
-            class_start_at: startTime,
-            late_after: lateAfter,
-            expires_at: endTime,
-            class_name: eventName.trim(),
-            created_by: staffName,
-          },
-        ])
+      const token = crypto.randomUUID();
+
+const { data } = await supabase
+  .from("attendance_sessions")
+  .insert([
+    {
+      class_start_at: startTime,
+      late_after: lateAfter,
+      expires_at: endTime,
+      class_name: eventName.trim(),
+      created_by: staffName,
+      qr_token: token,
+      qr_expiry: new Date(
+        Date.now() + 30000
+      ).toISOString(),
+    },
+  ])
         .select()
         .single();
 
