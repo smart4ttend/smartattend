@@ -59,7 +59,6 @@ alert("NOW = " + new Date().toISOString());
       
 // 🔥 QR expired atau token salah
 if (
-  token !== data.qr_token ||
   new Date() > new Date(data.qr_expiry)
 ) {
   setErrorMsg(
