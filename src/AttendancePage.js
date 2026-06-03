@@ -55,7 +55,7 @@ if (
     };
 
     fetchEvent();
-  }, [sessionId]);
+  }, [sessionId, token]);
 
   // ===============================
   // 2️⃣ SUBMIT CHECK-IN
