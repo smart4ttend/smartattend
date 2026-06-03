@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 function AttendancePage() {
   const params = new URLSearchParams(window.location.search);
   const sessionId = params.get("session_id");
-
+  const token = params.get("token");
   const [participantName, setParticipantName] = useState("");
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(false);
