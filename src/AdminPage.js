@@ -164,6 +164,33 @@ if (!data || data.created_by !== staffName) {
     checkExpired();
   }, [sessionId]);
 
+  useEffect(() => {
+  if (!sessionId || isExpired) return;
+
+  const refreshQR = async () => {
+    const newToken = crypto.randomUUID();
+
+    await supabase
+      .from("attendance_sessions")
+      .update({
+        qr_token: newToken,
+        qr_expiry: new Date(
+          Date.now() + 30000
+        ).toISOString(),
+      })
+      .eq("id", sessionId);
+
+    setQrToken(newToken);
+  };
+
+  refreshQR();
+
+  const interval = setInterval(refreshQR, 30000);
+
+  return () => clearInterval(interval);
+}, [sessionId, isExpired]);
+
+  
   const createEventSession = async () => {
     if (!startTime || !lateAfter || !endTime) {
       alert("Please fill in all fields.");
