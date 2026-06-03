@@ -304,7 +304,7 @@ const { data } = await supabase
     }}
   >
     {/* QR */}
-    {sessionId && !isExpired && currentEventName && (
+    {sessionId && !isExpired && (
       <div>
         <h3>📍 {currentEventName || "Event"}</h3>
 
