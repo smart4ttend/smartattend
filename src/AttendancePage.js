@@ -58,14 +58,14 @@ alert("EXPIRY = " + data.qr_expiry);
 alert("NOW = " + new Date().toISOString());
       
 // 🔥 QR expired atau token salah
-if (
-  new Date() > new Date(data.qr_expiry)
-) {
-  setErrorMsg(
-    "QR Code expired. Please scan the latest QR code."
-  );
-  return;
-}
+// if (
+//  new Date() > new Date(data.qr_expiry)
+// ) {
+//  setErrorMsg(
+//    "QR Code expired. Please scan the latest QR code."
+//  );
+ // return;
+// }
       setEvent(data);
     };
 
