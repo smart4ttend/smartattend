@@ -6,9 +6,6 @@ function AttendancePage() {
   const sessionId = params.get("session_id");
   const token = params.get("token");
   
-  alert(window.location.href);
-  alert("TOKEN = " + token);
-  
   const [participantName, setParticipantName] = useState("");
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -51,11 +48,6 @@ console.log("URL TOKEN =", token);
 console.log("DB TOKEN =", data.qr_token);
 console.log("NOW =", new Date());
 console.log("EXPIRY =", new Date(data.qr_expiry));
-
-alert("URL TOKEN = " + token);
-alert("DB TOKEN = " + data.qr_token);
-alert("EXPIRY = " + data.qr_expiry);
-alert("NOW = " + new Date().toISOString());
       
 // 🔥 QR expired atau token salah
 // if (
