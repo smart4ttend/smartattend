@@ -224,6 +224,7 @@ const { data } = await supabase
         .single();
 
       setSessionId(data.id);
+      setQrToken(token);
       setSessions(prev => [data, ...prev]);
       localStorage.setItem("activeSessionId", data.id);
       setIsExpired(false);
