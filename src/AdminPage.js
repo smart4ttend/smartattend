@@ -183,8 +183,6 @@ if (!data || data.created_by !== staffName) {
     setQrToken(newToken);
   };
 
-  refreshQR();
-
   const interval = setInterval(refreshQR, 30000);
 
   return () => clearInterval(interval);
