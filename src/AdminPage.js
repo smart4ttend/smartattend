@@ -310,7 +310,9 @@ const { data } = await supabase
 
        <img
   style={{ width: 350 }}
-  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${window.location.origin}/attendance?session_id=${sessionId}&token=${qrToken}`}
+  src={`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(
+    `${window.location.origin}/attendance?session_id=${sessionId}&token=${qrToken}`
+  )}&t=${Date.now()}`}
   alt="QR"
 />
 
