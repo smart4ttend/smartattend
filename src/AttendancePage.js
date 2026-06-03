@@ -29,10 +29,20 @@ function AttendancePage() {
         .single();
 
       if (error || !data) {
-        setErrorMsg("Event not found.");
-        return;
-      }
-      if (
+  setErrorMsg("Event not found.");
+  return;
+}
+
+// 🔥 QR lama tanpa token
+if (!token) {
+  setErrorMsg(
+    "Invalid QR Code. Please scan the latest QR."
+  );
+  return;
+}
+
+// 🔥 QR expired atau token salah
+if (
   token !== data.qr_token ||
   new Date() > new Date(data.qr_expiry)
 ) {
