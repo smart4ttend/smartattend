@@ -5,6 +5,10 @@ function AttendancePage() {
   const params = new URLSearchParams(window.location.search);
   const sessionId = params.get("session_id");
   const token = params.get("token");
+  
+  alert(window.location.href);
+  alert("TOKEN = " + token);
+  
   const [participantName, setParticipantName] = useState("");
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(false);
