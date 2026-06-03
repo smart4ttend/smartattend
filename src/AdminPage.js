@@ -53,6 +53,7 @@ function AdminPage({ staffName, logout }) {
 
   const [eventName, setEventName] = useState("");
   const [currentEventName, setCurrentEventName] = useState("");
+  const [qrToken, setQrToken] = useState("");
 
   const [startTime, setStartTime] = useState("");
   const [lateAfter, setLateAfter] = useState("");
