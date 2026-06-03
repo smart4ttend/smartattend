@@ -43,6 +43,11 @@ if (!token) {
   return;
 }
 
+console.log("URL TOKEN =", token);
+console.log("DB TOKEN =", data.qr_token);
+console.log("NOW =", new Date());
+console.log("EXPIRY =", new Date(data.qr_expiry));
+      
 // 🔥 QR expired atau token salah
 if (
   token !== data.qr_token ||
