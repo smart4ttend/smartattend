@@ -84,6 +84,15 @@ console.log("EXPIRY =", new Date(data.qr_expiry));
       ? new Date(event.late_after)
       : null;
 
+    console.log("NOW:", now);
+console.log("START:", event.class_start_at);
+console.log("LATE:", event.late_after);
+console.log("END:", event.expires_at);
+
+console.log("NOW ISO:", now.toISOString());
+console.log("LATE ISO:", lateAfter?.toISOString());
+console.log("END ISO:", expiresAt.toISOString());
+    
     if (now > expiresAt) {
       alert("❌ This event has ended. Check-in rejected.");
       return;
