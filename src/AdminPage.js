@@ -207,9 +207,9 @@ const { data } = await supabase
   .from("attendance_sessions")
   .insert([
     {
-      class_start_at: startTime,
-      late_after: lateAfter,
-      expires_at: endTime,
+      class_start_at: new Date(startTime).toISOString(),
+      late_after: new Date(lateAfter).toISOString(),
+      expires_at: new Date(endTime).toISOString(),
       class_name: eventName.trim(),
       created_by: staffName,
       qr_token: token,
